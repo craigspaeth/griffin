@@ -3,15 +3,16 @@
 ### Model
 
 - JSON-like data modeling which seamlessly hooks into GraphQL
-- CRUD support
-- Persistance agonstic
+- CRUD validation support using Vex
+- Persistance agonstic with adapters
 
 ````elixir
 defmodule ArtistModel
   use Griffin.Model
+  use Griffin.Persistence.Mongo
 
-  def valid_city
-
+  def valid_city(city_string)
+    GoogleMaps.validate city_string
   end
 
   fields %{
@@ -24,8 +25,9 @@ defmodule ArtistModel
       address: [:string],
       city: [:string, valid_city],
       geo: %{
-        lng: [:],
-        lat: [:]
+        lng: [:float],
+        lat: [:float,
+          on_create: [presence: true]]
       }
     }
   }
@@ -97,16 +99,33 @@ defmodule HomeController
 end
 ```
 
-### Routes
+### Apps
+
+- Individual Plug apps
+- Provides a place for routing/glue
+- Separated by page reloads... (or not b/c enforced stateless?)
+- A root "project" combines apps to be passed into Cowboy
 
 ```elixir
-defmodule Router
-  use Griffin.Router
+defmodule HomeApp do
+  use Griffin.App
+  use ArtistModel
+  use ArtistView
 
   get "/", HomeController.home
 end
+
+defmodule MyProject do
+  use Griffin.Project
+
+  mount HomeApp
+end
 ```
 
-### Apps
-
-- Separated by page reloads... (or not b/c enforced stateless?)
+```
+$ iex -S mix
+iex> c "path/to/file.ex"
+[MyApp]
+iex> {:ok, _} = Plug.Adapters.Cowboy.http MyProject, []
+{:ok, #PID<...>}
+```
