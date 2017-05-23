@@ -3,6 +3,6 @@ defmodule GriffinTest do
   doctest Griffin
 
   test "the truth" do
-    assert 1 + 1 == 2
+    assert Griffin.hello() == :world
   end
 end
