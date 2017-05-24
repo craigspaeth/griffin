@@ -8,9 +8,9 @@ defmodule Griffin.Model do
   end
 
   @doc """
-  Validates a map of fields against a schema returning true/false
+  Validates a map of json-like data against a schema returning true/false
   """
-  def validate(fields, schema) do
+  def valid?(data, schema) do
     valids = for {key, val} <- schema do
 
       # Validate against GraphQL types
@@ -29,12 +29,13 @@ defmodule Griffin.Model do
         true -> false
       end
 
-      # Run extra validations through Vex
+      # Run validation chain
       validations = val
                     |> Enum.slice(1..-1)
                     |> Enum.at(0)
-      passed_vex = Vex.valid? fields, [{key, validations}]
-      valid_type and passed_vex
+      IO.inspect Enum.at validations, 0
+      IO.inspect data[key]
+      valid_type and true
     end
     Enum.all? valids
   end

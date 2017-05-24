@@ -38,7 +38,6 @@ defmodule Griffin.Mixfile do
     [
       {:cowboy, "~> 1.0.0"},
       {:plug, "~> 1.0"},
-      {:vex, "~> 0.6.0"},
       {:mix_test_watch, "~> 0.3", only: :dev, runtime: false}
     ]
   end
