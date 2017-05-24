@@ -38,6 +38,7 @@ defmodule Griffin.Mixfile do
     [
       {:cowboy, "~> 1.0.0"},
       {:plug, "~> 1.0"},
+      {:credo, "~> 0.8.0-rc6", only: [:dev, :test], runtime: false},
       {:mix_test_watch, "~> 0.3", only: :dev, runtime: false}
     ]
   end

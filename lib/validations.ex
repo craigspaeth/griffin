@@ -3,7 +3,7 @@ defmodule Griffin.Validations do
   A library of built-in simple validation functions that return true/false
   """
 
-  def required() do
-    fn (val) -> not is_nil val end
+  def required(val) do
+    not is_nil val
   end
 end

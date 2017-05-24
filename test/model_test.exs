@@ -5,7 +5,7 @@ defmodule GriffinModelTest do
 
   test "validates a map of fields" do
     schema = [
-      name: [:string, required()]
+      name: [:string, :required]
     ]
     harry = %{name: "Harry Potter"}
     voldemort = %{name: nil}

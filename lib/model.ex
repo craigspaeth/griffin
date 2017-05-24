@@ -1,4 +1,8 @@
 defmodule Griffin.Model do
+  @moduledoc """
+  Model library providing validations, database persistence, and
+  GrapHQL integration
+  """
 
   @doc """
   Converts a map into a set of CRUD validation rules.
@@ -15,26 +19,26 @@ defmodule Griffin.Model do
 
       # Validate against GraphQL types
       type = Enum.at val, 0
-      valid_type = cond do
-        Enum.member? [
-          :string,
-          :int,
-          :float,
-          :boolean,
-          :object,
-          :input_object,
-          :non_null,
-          :list
-        ] , type -> true
-        true -> false
+      valid_type = if Enum.member? [
+        :string,
+        :int,
+        :float,
+        :boolean,
+        :object,
+        :input_object,
+        :non_null,
+        :list
+      ], type do
+        true
+      else
+        false
       end
 
-      # Run validation chain
+      # Inspect validation
       validations = val
-                    |> Enum.slice(1..-1)
-                    |> Enum.at(0)
-      IO.inspect Enum.at validations, 0
-      IO.inspect data[key]
+        |> Enum.slice(1..-1)
+        |> Enum.at(0)
+      IO.puts validations
       valid_type and true
     end
     Enum.all? valids
