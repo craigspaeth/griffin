@@ -6,4 +6,8 @@ defmodule Griffin.Validations do
   def required(val) do
     not is_nil val
   end
+
+  def min(val, m) do
+    String.length val < m 
+  end
 end

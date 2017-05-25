@@ -1,9 +1,12 @@
 defmodule GriffinModelTest do
+  @moduledoc """
+  Tests for Model library
+  """
+  
   use ExUnit.Case
-  import Griffin.Validations
   import Griffin.Model
 
-  test "validates a map of fields" do
+  test "validates a DSL schema" do
     schema = [
       name: [:string, :required]
     ]
@@ -13,12 +16,20 @@ defmodule GriffinModelTest do
     assert not valid? voldemort, schema
   end
 
+  test "validates key val pairs" do
+    schema = [
+      name: [:string, min: 10]
+    ]
+    db = %{name: "dB"}
+    assert not valid? db, schema
+  end
+
   test "validates a complex schema" do
     # [
     #   name: [:string, length: 0..10],
     #   age: [:int, between: 0..100],
     #   single: [:boolean, :required],
-    #   children: [:list, :required, max_items: 10, items: [
+    #   children: [:list, max_items: 10, items: [
     #     [:string, length: 0..100],
     #     [:number, max: 100, &custom_fn/1]
     #   ]],

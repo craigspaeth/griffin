@@ -17,7 +17,7 @@ defmodule Griffin.Model do
   def valid?(data, schema) do
     valids = for {key, val} <- schema do
 
-      # Validate against GraphQL types
+      # Validate the first atom in the DSL is a valid GraphQL type
       type = Enum.at val, 0
       valid_type = if Enum.member? [
         :string,
@@ -34,12 +34,19 @@ defmodule Griffin.Model do
         false
       end
 
-      # Inspect validation
+      # Check the DSL of the rules following the type passes validation
       validations = val
         |> Enum.slice(1..-1)
         |> Enum.at(0)
-      IO.puts validations
-      valid_type and true
+      valid_rules = if is_atom validations do
+        rule_func = validations
+        IO.puts validations
+        apply Griffin.Validations, rule_func, [data[key]]
+      else
+        IO.puts "many validation rules"
+        true
+    end
+      valid_type and valid_rules
     end
     Enum.all? valids
   end
