@@ -33,6 +33,53 @@ defmodule GriffinModelTest do
     assert valid? %{name: "Sarah"}, schema
   end
 
+  def starts_with_letter (letter) do
+    fn (val) ->
+      String.first(val) == letter
+    end
+  end
+  
+  test "validates custom validation functions" do
+    schema = [
+      name: [:string, starts_with_letter "A"]
+    ]
+    assert not valid? %{name: "Bob"}, schema
+    assert valid? %{name: "Anne"}, schema
+  end
+
+  test "validates nested objects" do
+    schema = [
+      location: [:object, :required, keys: [
+        city: [:string, :required, min: 3],
+        
+      ]]
+    ]
+    cincinnati = %{
+      location: %{
+        city: "Cincinnati"
+      }
+    }
+    new_york = %{
+      location: %{
+        city: "NY"
+      }
+    }
+    assert valid? cincinnati, schema
+    assert not valid? new_york, schema
+  end
+
+  test "validates nested lists" do
+    schema = [
+      children: [:list, items: [
+        name: [:string, :required, min: 3],
+      ]]
+    ]
+    parent = %{children: ["Bobby"]}
+    expecting_parent = %{children: ["N/A"]}
+    assert valid? parent, schema
+    assert not valid? expecting_parent, schema
+  end
+
   test "validates a complex schema" do
     # [
     #   name: [:string, length: 0..10],

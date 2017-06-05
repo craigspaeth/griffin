@@ -14,4 +14,8 @@ defmodule Griffin.Validations do
   def max(val, len) do
     String.length(val) <= len     
   end
+
+  def keys(val, schema) do
+    Griffin.Model.valid? val, schema
+  end
 end
