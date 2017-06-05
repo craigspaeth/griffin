@@ -20,8 +20,17 @@ defmodule GriffinModelTest do
     schema = [
       name: [:string, min: 10]
     ]
-    db = %{name: "dB"}
-    assert not valid? db, schema
+    bob = %{name: "Bob"}
+    assert not valid? bob, schema
+  end
+
+  test "validates multiple key val pairs" do
+    schema = [
+      name: [:string, min: 4, max: 6]
+    ]
+    assert not valid? %{name: "Bob"}, schema
+    assert not valid? %{name: "Miranda"}, schema
+    assert valid? %{name: "Sarah"}, schema
   end
 
   test "validates a complex schema" do

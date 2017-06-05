@@ -1,6 +1,6 @@
 defmodule Griffin.Model do
   @moduledoc """
-  Model library providing validations, database persistence, and
+  Model library providing validation, database persistence, and
   GrapHQL integration
   """
 
@@ -15,10 +15,10 @@ defmodule Griffin.Model do
   Validates a map of json-like data against a schema returning true/false
   """
   def valid?(data, schema) do
-    valids = for {key, val} <- schema do
+    valids = for {attr, validation} <- schema do
 
       # Validate the first atom in the DSL is a valid GraphQL type
-      type = Enum.at val, 0
+      type = Enum.at validation, 0
       valid_type = if Enum.member? [
         :string,
         :int,
@@ -35,18 +35,22 @@ defmodule Griffin.Model do
       end
 
       # Check the DSL of the rules following the type passes validation
-      validations = val
-        |> Enum.slice(1..-1)
-        |> Enum.at(0)
-      valid_rules = if is_atom validations do
-        rule_func = validations
-        IO.puts validations
-        apply Griffin.Validations, rule_func, [data[key]]
-      else
-        IO.puts "many validation rules"
-        true
-    end
-      valid_type and valid_rules
+      rules = Enum.slice validation, 1..-1
+      valid_rules = for rule <- rules do
+        
+        # Single-arg rules like name: [:string, :required]
+        if is_atom rule do
+          rule_name = rule
+          apply Griffin.Validations, rule_name, [data[attr]]
+        
+        # Multi-arg rules like name: [:string, min: 10]
+        else
+          rule_name = rule |> Tuple.to_list |> List.first
+          rule_args = rule |> Tuple.to_list |> List.last
+          apply Griffin.Validations, rule_name, [data[attr], rule_args]
+        end
+      end
+      valid_type and Enum.all? valid_rules
     end
     Enum.all? valids
   end

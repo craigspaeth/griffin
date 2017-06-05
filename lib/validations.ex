@@ -7,7 +7,11 @@ defmodule Griffin.Validations do
     not is_nil val
   end
 
-  def min(val, m) do
-    String.length val < m 
+  def min(val, len) do
+    String.length(val) >= len 
+  end
+
+  def max(val, len) do
+    String.length(val) <= len     
   end
 end
