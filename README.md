@@ -3,19 +3,26 @@
 ### Model
 
 - JSON-like data modeling which seamlessly hooks into GraphQL
-- CRUD validation support using Vex
+- CRUD validation support (integrate from Vex/Ecto?)
 - Persistance agonstic with adapters
+
+#### Lifecycle of CRUD operation...
+- [ ] GQL to Keylist request
+- --
+- [x] Validate
+- [ ] Pre Middleware
+- [ ] Peristence
+- [ ] Post Middleware
+- [ ] Response to Keylist response
+- --
+- [ ] Convert response to JSON
 
 ````elixir
 defmodule ArtistModel
   use Griffin.Model
   use Griffin.Persistence.Mongo
 
-  def valid_city(city_string)
-    GoogleMaps.validate city_string
-  end
-
-  fields %{
+  @fields [
     name: [:string,
       :alphanum,
       [length: [in: 3..30]],
@@ -23,14 +30,18 @@ defmodule ArtistModel
     ],
     location: %{
       address: [:string],
-      city: [:string, valid_city],
+      city: [:string, [valid_city]],
       geo: %{
         lng: [:float],
         lat: [:float,
           on_create: [presence: true]]
       }
     }
-  }
+  ]
+
+  def valid_city(city_string)
+    GoogleMaps.validate city_string
+  end
 end
 ````
 

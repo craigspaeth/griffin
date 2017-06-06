@@ -1,6 +1,6 @@
 defmodule GriffinValidationsTest do
   @moduledoc """
-  Tests for Model library
+  Tests for Griffin validations functionality
   """
   
   use ExUnit.Case
@@ -120,5 +120,11 @@ defmodule GriffinValidationsTest do
     ]
     assert not valid? %{name: "Bob"}, schema, :create
     assert valid? %{name: "Bob"}, schema, :read
+  end
+
+  test "validates emails" do
+    schema = [email: [:string, :email]]
+    assert valid? %{email: "foo@bar.com"}, schema
+    assert not valid? %{email: "foo@bar"}, schema
   end
 end

@@ -31,7 +31,7 @@ defmodule Griffin.Mixfile do
   end
 
   def application do
-    [applications: [:logger, :cowboy, :plug]]
+    [applications: [:logger, :cowboy, :plug, :graphql]]
   end
 
   def deps do
@@ -39,7 +39,8 @@ defmodule Griffin.Mixfile do
       {:cowboy, "~> 1.0.0"},
       {:plug, "~> 1.0"},
       {:credo, "~> 0.8.0-rc6", only: [:dev, :test], runtime: false},
-      {:mix_test_watch, "~> 0.3", only: :dev, runtime: false}
+      {:mix_test_watch, "~> 0.3", only: :dev, runtime: false},
+      {:graphql, "~> 0.3"}
     ]
   end
 end

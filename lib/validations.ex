@@ -158,4 +158,9 @@ defmodule Griffin.Validations do
     end
     valids |> List.flatten |> Enum.any?
   end
+
+  def email(type, val) when type == :string do
+    regex = ~r/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}$/
+    if is_nil(Regex.run(regex, val)), do: false, else: true
+  end
 end
