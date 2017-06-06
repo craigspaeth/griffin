@@ -1,11 +1,11 @@
-defmodule GriffinModelTest do
+defmodule GriffinValidationsTest do
   @moduledoc """
   Tests for Model library
   """
   
   use ExUnit.Case
-  import Griffin.Model
-
+  import Griffin.Validations
+  
   test "validates a DSL schema" do
     schema = [
       name: [:string, :required]
@@ -39,6 +39,17 @@ defmodule GriffinModelTest do
     end
     schema = [
       name: [:string, [starts_with_letter, "A"]]
+    ]
+    assert not valid? %{name: "Bob"}, schema
+    assert valid? %{name: "Anne"}, schema
+  end
+
+  test "validates custom validation functions without args" do
+    starts_with_letter_a = fn (_, val) ->
+      String.first(val) == "A"
+    end
+    schema = [
+      name: [:string, starts_with_letter_a]
     ]
     assert not valid? %{name: "Bob"}, schema
     assert valid? %{name: "Anne"}, schema
@@ -97,5 +108,17 @@ defmodule GriffinModelTest do
     assert not valid? %{children: ["Bobby", "Sally", "Timmy"]}, schema
     assert valid? %{children: ["Bobby", "Sally", "Bobby"]}, schema
     assert not valid? %{children: ["Bobby", "Sally", "Bobby", "Sally"]}, schema
+  end
+
+  test "validates rules that only apply to CRUD operations" do
+    schema = [
+      name: [:string,
+        max: 5,
+        on_create_read: [:required],
+        on_create: [min: 10]
+      ]
+    ]
+    assert not valid? %{name: "Bob"}, schema, :create
+    assert valid? %{name: "Bob"}, schema, :read
   end
 end
