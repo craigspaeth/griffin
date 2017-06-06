@@ -32,26 +32,22 @@ defmodule GriffinModelTest do
     assert not valid? %{name: "Miranda"}, schema
     assert valid? %{name: "Sarah"}, schema
   end
-
-  def starts_with_letter (letter) do
-    fn (val) ->
-      String.first(val) == letter
-    end
-  end
   
   test "validates custom validation functions" do
+    start_with_letter = fn (type, val, letter) ->
+      String.first(val) == letter
+    end
     schema = [
-      name: [:string, starts_with_letter "A"]
+      name: [:string, must: [start_with_letter, "A"]]
     ]
     assert not valid? %{name: "Bob"}, schema
     assert valid? %{name: "Anne"}, schema
   end
 
-  test "validates nested objects" do
+  test "validates nested maps" do
     schema = [
-      location: [:object, :required, keys: [
-        city: [:string, :required, min: 3],
-        
+      location: [:map, of: [
+        city: [:string, :required, min: 3]
       ]]
     ]
     cincinnati = %{
@@ -68,11 +64,9 @@ defmodule GriffinModelTest do
     assert not valid? new_york, schema
   end
 
-  test "validates nested lists" do
+  test "validates lists" do
     schema = [
-      children: [:list, items: [
-        name: [:string, :required, min: 3],
-      ]]
+      children: [:list, of: [:string, :required, min: 4]]
     ]
     parent = %{children: ["Bobby"]}
     expecting_parent = %{children: ["N/A"]}
@@ -80,22 +74,28 @@ defmodule GriffinModelTest do
     assert not valid? expecting_parent, schema
   end
 
-  test "validates a complex schema" do
-    # [
-    #   name: [:string, length: 0..10],
-    #   age: [:int, between: 0..100],
-    #   single: [:boolean, :required],
-    #   children: [:list, max_items: 10, items: [
-    #     [:string, length: 0..100],
-    #     [:number, max: 100, &custom_fn/1]
-    #   ]],
-    #   location: [:object, :required, keys: [
-    #     city: [:string, :required],
-    #     geo: [:object, keys: [
-    #       lat: [:float, :required],
-    #       lng: [:float, :required]
-    #     ]]
-    #   ]]
-    # ]
+  test "validates either types" do
+    schema = [
+      id: [:either, of: [
+        [:string, min: 10],
+        [:int, max: 100]
+      ]]
+    ]
+    assert valid? %{id: "abcdefghijkl"}, schema
+    assert valid? %{id: 99}, schema
+    assert not valid? %{id: 101}, schema
+  end
+
+  test "validates list either types" do
+    schema = [
+      children: [:list, max: 3, of: [:either, of: [
+        [:string, equals: "Bobby"],
+        [:string, equals: "Sally"]
+      ]]]
+    ]
+    assert valid? %{children: ["Bobby", "Sally"]}, schema
+    assert not valid? %{children: ["Bobby", "Sally", "Timmy"]}, schema
+    assert valid? %{children: ["Bobby", "Sally", "Bobby"]}, schema
+    assert not valid? %{children: ["Bobby", "Sally", "Bobby", "Sally"]}, schema
   end
 end
