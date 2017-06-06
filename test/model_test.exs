@@ -34,11 +34,11 @@ defmodule GriffinModelTest do
   end
   
   test "validates custom validation functions" do
-    start_with_letter = fn (type, val, letter) ->
+    starts_with_letter = fn (_, val, letter) ->
       String.first(val) == letter
     end
     schema = [
-      name: [:string, must: [start_with_letter, "A"]]
+      name: [:string, [starts_with_letter, "A"]]
     ]
     assert not valid? %{name: "Bob"}, schema
     assert valid? %{name: "Anne"}, schema

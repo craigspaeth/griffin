@@ -49,8 +49,9 @@ defmodule Griffin.Model do
               apply Griffin.Validations, rule_name, [type, data[attr]]
             
             # Function rule like name: [:string, starts_with_letter "a"]
-            is_function rule ->
-              rule.(data[attr])
+            is_list rule ->
+              [func, arg] = rule
+              func.(type, data[attr], arg)
 
             # Multi-arg rules like name: [:string, min: 10]
             true ->

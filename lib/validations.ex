@@ -11,11 +11,6 @@ defmodule Griffin.Validations do
     not is_nil val
   end
 
-  def must(type, val, sig) do
-    [func, arg] = sig
-    func.(type, val, arg)
-  end
-
   def min(type, val, len) when type == :string do
     String.length(val) >= len
   end
