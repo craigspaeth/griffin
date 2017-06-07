@@ -30,7 +30,7 @@ defmodule ArtistModel
     ],
     location: %{
       address: [:string],
-      city: [:string, [valid_city]],
+      city: [:string, valid_city],
       geo: %{
         lng: [:float],
         lat: [:float,
