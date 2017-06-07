@@ -1,9 +1,9 @@
-defmodule Griffin.Validations do
+defmodule Griffin.Model.Validations do
   @moduledoc """
   Library of validation functions and a `valid?/2` function that will
   check a map of GraphQL/JSON-like data passes a series of validations.
   
-  Used in the models to enforce a database schema that works for the database
+  Used in the models to enforce a database dsl that works for the database
   and exposing to GraphQL.
   """
 
@@ -11,46 +11,34 @@ defmodule Griffin.Validations do
   Runs `valid?/2` against a certain type of CRUD operation
   
   ## Examples
-    iex> schema = [name: [:string, on_create: [:required]]]
-    iex> Griffin.Validations.valid? %{ name: nil }, schema, :create
+    iex> dsl = [name: [:string, on_create: [:required]]]
+    iex> Griffin.Validations.valid? %{ name: nil }, dsl, :create
     false
-    iex> Griffin.Validations.valid? %{ name: nil }, schema, :read
+    iex> Griffin.Model.Validations.valid? %{ name: nil }, dsl, :read
     true
 
   """
-  def valid?(data, schema, crud_operation) do
-    new_schema = for {attr, [type | rules]} <- schema do
-      new_rules = for {key, rules} <- rules do
-        [head | operations] = key |> to_string |> String.split("_")
-        is_operation = Enum.member? operations, to_string crud_operation
-        cond do
-          head == "on" and is_operation -> rules
-          head != "on" -> {key, rules}
-          true -> nil
-        end
-      end
-      new_rules = new_rules |> List.flatten |> List.delete(nil) 
-      {attr, [type | new_rules]}
-    end
-    valid? data, new_schema
+  def valid?(data, dsl, crud_operation) do
+    new_dsl = Griffin.Model.DSL.for_crud dsl, crud_operation
+    valid? data, new_dsl
   end
 
   @doc """
-  Validates a map of json-like data against a schema
+  Validates a map of json-like data against a dsl
   
   ## Parameters
 
     - data: Map of GraphQL/JSON-like data
-    - schema: A DSL of atoms, lists, and functions for validating `data`
+    - dsl: A DSL of atoms, lists, and functions for validating `data`
 
   ## Examples
 
-    iex> Griffin.Validations.valid? %{name: "Bob"}, [name: [:string, :required]]
+    iex> Griffin.Model.Validations.valid? %{name: "Bob"}, [name: [:string, :required]]
     true
 
   """
-  def valid?(data, schema) do
-    valids = for {attr, validation} <- schema do
+  def valid?(data, dsl) do
+    valids = for {attr, validation} <- dsl do
 
       # Validate the first atom in the DSL is a valid GraphQL type
       type = Enum.at validation, 0
@@ -82,7 +70,7 @@ defmodule Griffin.Validations do
             # [name: [:string, :required]]
             is_atom rule ->
               rule_name = rule
-              apply Griffin.Validations, rule_name, [type, data[attr]]
+              apply Griffin.Model.Validations, rule_name, [type, data[attr]]
             
             # Single-arg function like
             # [name: is_caps]
@@ -100,7 +88,7 @@ defmodule Griffin.Validations do
             true ->
               rule_name = rule |> Tuple.to_list |> List.first
               rule_args = rule |> Tuple.to_list |> Enum.slice(1..-1)
-              apply Griffin.Validations, rule_name, [type, data[attr]] ++ rule_args
+              apply Griffin.Model.Validations, rule_name, [type, data[attr]] ++ rule_args
           end
         rescue
           FunctionClauseError -> false
@@ -141,20 +129,20 @@ defmodule Griffin.Validations do
     Enum.count(val) <= len     
   end
 
-  def of(type, val, schema) when type == :map do
-    valid? val, schema
+  def of(type, val, dsl) when type == :map do
+    valid? val, dsl
   end
 
-  def of(type, val, schema) when type == :list do
+  def of(type, val, dsl) when type == :list do
     valids = for item <- val do
-      valid? %{item: item}, [item: schema]
+      valid? %{item: item}, [item: dsl]
     end
     valids |> List.flatten |> Enum.all? 
   end
 
-  def of(type, val, schemas) when type == :either do
-    valids = for schema <- schemas do
-      valid? %{item: val}, [item: schema]
+  def of(type, val, dsls) when type == :either do
+    valids = for dsl <- dsls do
+      valid? %{item: val}, [item: dsl]
     end
     valids |> List.flatten |> Enum.any?
   end

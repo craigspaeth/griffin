@@ -1,12 +1,41 @@
-defmodule Griffin.Model do
+defmodule Griffin.Model.DSL do
   @moduledoc """
-  Model library providing validation, database persistence, and
-  GraphQL integration.
+  Module for interacting with the `def fields` part of Griffin models
   """
 
   @doc """
-  Converts a Griffin fields DSL into a map of GraphQL CRUD Elixir schemas
-  that can be composed through `graphqlize` and run through `GraphQL.execute`.
+  Takes a fields DSL with the conditional CRUD fields and outputs a fields DSL
+  with the CRUD fields removed or expanded if it matches the CRUD operation.
+
+  ## Example
+
+    iex> dsl = [:string, on_create: :required] 
+    iex> Griffin.Model.DSL.for_crud dsl, :create
+    [:string, :required]
+    iex> Griffin.Model.DSL.for_crud dsl, :read
+    [:string] 
+
+  """
+  def for_crud(dsl, crud_operation) do
+    for {attr, [type | rules]} <- dsl do
+      new_rules = for {key, rules} <- rules do
+        [head | operations] = key |> to_string |> String.split("_")
+        is_operation = Enum.member? operations, to_string crud_operation
+        cond do
+          head == "on" and is_operation -> rules
+          head != "on" -> {key, rules}
+          true -> nil
+        end
+      end
+      new_rules = new_rules |> List.flatten |> List.delete(nil) 
+      {attr, [type | new_rules]}
+    end
+  end
+
+  @doc """
+  Converts a Griffin fields DSL into a CRUD map of query/mutation GraphQL 
+  schemas that can be composed through `graphqlize` and run
+  through `GraphQL.execute`.
 
   ## Parameters
 
@@ -22,12 +51,12 @@ defmodule Griffin.Model do
 
   ## Example
 
-    iex> schema = Griffin.Model.fields_to_graphql [name: [:string]] 
+    iex> schema = Griffin.Model.[ |> to_graphql(me: [:string]] 
     iex> GraphQL.execute schema, "{ name }"
     {:ok, %{data: %{"name" => "Harry Potter"}}}
   
   """
-  def to_graphql_schemas(
+  def to_graphql_map(
     namespace: namespace,
     fields: fields,
     create: create,
@@ -40,46 +69,46 @@ defmodule Griffin.Model do
     read_field = %{
       type: %GraphQL.Type.ObjectType{
         name: "#{String.capitalize to_string namespace}QueryType",
-        fields: dsl_to_graphql(fields, :read)
+        fields: fields |> to_graphql(:read)
       },
       resolve: read,
-      args: dsl_to_graphql(fields, :read)
+      args: fields |> to_graphql(:read)
     }
     # List Query
     list_field = %{
       type: %GraphQL.Type.ObjectType{
         name: "#{String.capitalize to_string namespace}ListQueryType",
-        fields: dsl_to_graphql(fields, :list)
+        fields: fields |> to_graphql(:list)
       },
       resolve: list,
-      args: dsl_to_graphql(fields, :list)
+      args: fields |> to_graphql(:list)
     }
     # Create Mutation
     create_field = %{
       type: %GraphQL.Type.ObjectType{
         name: "Create#{String.capitalize to_string namespace}MutationType",
-        fields: dsl_to_graphql(fields, :create)
+        fields: fields |> to_graphql(:create)
       },
       resolve: create,
-      args: dsl_to_graphql(fields, :create)
+      args: fields |> to_graphql(:create)
     }
     # Delete Mutation
     delete_field = %{
       type: %GraphQL.Type.ObjectType{
         name: "Delete#{String.capitalize to_string namespace}MutationType",
-        fields: dsl_to_graphql(fields, :delete)
+        fields: fields |> to_graphql(:delete)
       },
       resolve: delete,
-      args: dsl_to_graphql(fields, :delete)
+      args: fields |> to_graphql(:delete)
     }
     # Update Mutation
     update_field = %{
       type: %GraphQL.Type.ObjectType{
         name: "Update#{String.capitalize to_string namespace}MutationType",
-        fields: dsl_to_graphql(fields, :update)
+        fields: fields |> to_graphql(:update)
       },
       resolve: update,
-      args: dsl_to_graphql(fields, :update)
+      args: fields |> to_graphql(:update)
     }
     # Compose CRUDL schemas into a map of query/mutation GraphQL schemas
     %{
@@ -95,7 +124,8 @@ defmodule Griffin.Model do
     }
   end
 
-  defp dsl_to_graphql(fields, crud_operation) do
+  # Converts a fields dsl into a map of GraphQL types
+  defp to_graphql(fields, crud_operation) do
     fields = for {attr, [type | rules]} <- fields do
       graphql_type = case type do
         :string -> %GraphQL.Type.String{}
@@ -111,26 +141,5 @@ defmodule Griffin.Model do
       {attr, field}
     end
     Enum.into fields, %{}
-  end
-
-  @doc """
-  Converts a list of model modules into a single GraphQL schema that
-  can be run through `GraphQL.execute`.
-  """
-  def graphqlize(models) do
-    noop = fn (_, _, _) -> nil end
-    for model <- models do
-      schema_map = to_graphql_schemas(
-        namespace: model.namespace,
-        fields: model.fields,
-        create: noop,
-        read: noop,
-        update: noop,
-        delete: noop,
-        list: noop
-      )
-      IO.inspect schema_map
-    end
-    models
   end
 end

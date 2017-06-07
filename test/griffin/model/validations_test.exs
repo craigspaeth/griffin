@@ -1,10 +1,10 @@
-defmodule GriffinValidationsTest do
+defmodule Griffin.Model.ValidationsTest do
   @moduledoc """
   Tests for Griffin validations functionality
   """
   
   use ExUnit.Case
-  import Griffin.Validations
+  import Griffin.Model.Validations
   
   test "validates a DSL schema" do
     schema = [
