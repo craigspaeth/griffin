@@ -15,6 +15,16 @@ defmodule GriffinValidationsTest do
     assert valid? harry, schema
     assert not valid? voldemort, schema
   end
+  
+  test "validates a DSL schema using imported functions" do
+    schema = [
+      name: [:string, &required/2]
+    ]
+    harry = %{name: "Harry Potter"}
+    voldemort = %{name: nil}
+    assert valid? harry, schema
+    assert not valid? voldemort, schema
+  end
 
   test "validates key val pairs" do
     schema = [
@@ -53,6 +63,17 @@ defmodule GriffinValidationsTest do
     ]
     assert not valid? %{name: "Bob"}, schema
     assert valid? %{name: "Anne"}, schema
+  end
+
+  test "validates custom validation functions based on types" do
+    starts_with_letter_a = fn (type, val) when type == :string ->
+      String.first(val) == "A"
+    end
+    schema = [name: [:string, starts_with_letter_a]]
+    assert not valid? %{name: "Bob"}, schema
+    assert valid? %{name: "Anne"}, schema
+    schema = [name: [:int, starts_with_letter_a]]
+    assert not valid? %{name: "A Num"}, schema
   end
 
   test "validates nested maps" do

@@ -18,7 +18,7 @@
 - [ ] Convert response to JSON
 
 ````elixir
-defmodule WizardModel
+defmodule WizardModel do
   import Griffin.Model
   
   @fields [
