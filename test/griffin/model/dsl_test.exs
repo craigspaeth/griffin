@@ -58,10 +58,10 @@ defmodule Griffin.Model.DSLTest do
         fields: m
       }
     }
-    res = GraphQL.execute schema, "{ wizard { name } }"
-    IO.inspect res
-    res = GraphQL.execute schema, "{ wizard_list { name } }"
-    IO.inspect res
+    {status, _} = GraphQL.execute schema, "{ wizard { name } }"
+    assert status == :ok
+    {status, _} = GraphQL.execute schema, "{ wizard_list { name } }"
+    assert status == :error
   end
   
   # defmodule WizardModel do

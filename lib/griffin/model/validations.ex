@@ -18,8 +18,8 @@ defmodule Griffin.Model.Validations do
     true
 
   """
-  def valid?(data, dsl, crud_operation) do
-    new_dsl = Griffin.Model.DSL.for_crud dsl, crud_operation
+  def valid?(data, dsl, crud_op) do
+    new_dsl = Griffin.Model.DSL.for_crud_op dsl, crud_op
     valid? data, new_dsl
   end
 

@@ -16,11 +16,11 @@ defmodule Griffin.Model.DSL do
     [:string] 
 
   """
-  def for_crud(dsl, crud_operation) do
+  def for_crud_op(dsl, crud_op) do
     for {attr, [type | rules]} <- dsl do
       new_rules = for {key, rules} <- rules do
         [head | operations] = key |> to_string |> String.split("_")
-        is_operation = Enum.member? operations, to_string crud_operation
+        is_operation = Enum.member? operations, to_string crud_op
         cond do
           head == "on" and is_operation -> rules
           head != "on" -> {key, rules}
@@ -125,11 +125,15 @@ defmodule Griffin.Model.DSL do
   end
 
   # Converts a fields dsl into a map of GraphQL types
-  defp to_graphql(fields, crud_operation) do
-    fields = for {attr, [type | rules]} <- fields do
-      graphql_type = case type do
-        :string -> %GraphQL.Type.String{}
-        true -> nil
+  defp to_graphql(dsl, crud_op) do
+    fields = for {attr, [type | rules]} <- for_crud_op dsl, crud_op do 
+      graphql_type = cond do
+        Enum.member?(rules, :required) ->
+          %GraphQL.Type.NonNull{ofType: %GraphQL.Type.String{}}
+        type == :string ->
+          %GraphQL.Type.String{}
+        true ->
+          nil
       end
       field = %{
         type: graphql_type
