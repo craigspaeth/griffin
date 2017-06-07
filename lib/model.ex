@@ -39,9 +39,13 @@ defmodule Griffin.Model do
     # Read Query
     read_field = %{
       type: %GraphQL.Type.ObjectType{
-        name: "#{namespace}QueryType",
-        fields: dsl_to_graphql_fields(fields, :read)
-      }
+        name: "#{String.capitalize to_string namespace}QueryType",
+        fields: dsl_to_graphql(fields, :read)
+      },
+      resolve: read,
+      args: dsl_to_graphql(fields, :read)
+      # TODO:
+      # description: "",
     }
     # List Query
     # Create Mutation
@@ -58,17 +62,23 @@ defmodule Griffin.Model do
   end
 
   @doc """
-  Converts a fields DSL into a GraphQL fields map
+  Converts a Griffin fields DSL into a GraphQL map of types
   """
-  defp dsl_to_graphql_fields(fields, crud_operation) do
+  defp dsl_to_graphql(fields, crud_operation) do
     fields = for {attr, [type | rules]} <- fields do
       graphql_type = case type do
         :string -> %GraphQL.Type.String{}
         true -> nil
       end
-      {attr, graphql_type}
+      field = %{
+        type: graphql_type
+        # TODO:
+        # resolve: fn () -> end,
+        # description: "",
+        # args: %{}
+      }
+      {attr, field}
     end
-    IO.inspect fields
-    fields
+    Enum.into fields, %{}
   end
 end
