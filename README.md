@@ -18,29 +18,28 @@
 - [ ] Convert response to JSON
 
 ````elixir
-defmodule ArtistModel
-  use Griffin.Model
-  use Griffin.Persistence.Mongo
-
+defmodule WizardModel
+  import Griffin.Model
+  
   @fields [
-    name: [:string,
-      :alphanum,
-      [length: [in: 3..30]],
-      [on_write: [presence: true]]
-    ],
-    location: %{
-      address: [:string],
-      city: [:string, valid_city],
-      geo: %{
-        lng: [:float],
-        lat: [:float,
-          on_create: [presence: true]]
-      }
-    }
+    name: [:string, :required],
+    school: [:map, of: [
+      name: [:string],
+      geo: [:map, of: [
+        lat: [:int, :required],
+        lng: [:int, :required]
+      ]]
+    ]] 
   ]
 
-  def valid_city(city_string)
-    GoogleMaps.validate city_string
+  def resolve(ctx) do
+    ctx
+      |> validate(@fields)
+      |> denormalize_spells
+      |> persist
+      |> join_spells
+      |> send_weclome_email
+      |> to_response    
   end
 end
 ````
