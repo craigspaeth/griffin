@@ -37,4 +37,29 @@ defmodule Griffin.Model.Module do
       }
     end
   end
+  
+  @doc """
+  Accepts a model module and passes a `ctx` keyword list through its `resolve`
+  function. This `resolve` function is expected to return a tuple with the 
+  appropriate json responses like...
+  
+  ```
+  defmodule MyModel do
+    def resolve(ctx) do
+      # Pipe `ctx` through some middleware and return:
+      {
+        ~s({"create":"json"}),
+        ~s({"read":"json"}),
+        ~s({"update":"json"}),
+        ~s({"delete":"json"}),
+        ~s({"list":"json"})
+      }
+    end
+  end
+  ```
+
+  """
+  def resolve(model) do
+    
+  end
 end

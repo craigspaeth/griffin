@@ -32,14 +32,18 @@ defmodule WizardModel do
     ]] 
   ]
 
+  def send_weclome_email(crud_op: crud_op) when crud_op == :create do
+    IO.puts
+  end
+
   def resolve(ctx) do
     ctx
-      |> validate(@fields)
-      |> normalize_name
-      |> persist
-      |> join_spells
-      |> on([:create], send_weclome_email)
-      |> to_response    
+    |> validate(fields)
+    |> normalize_name
+    |> persist
+    |> join_spells
+    |> send_weclome_email
+    |> to_response    
   end
 end
 ````

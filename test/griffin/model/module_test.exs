@@ -19,6 +19,10 @@ defmodule Griffin.Model.ModuleTest do
         ]]
       ]] 
     ]
+
+    def resolve(ctx) do
+      IO.inspect ctx
+    end
   end
 
   test "converts a bunch of models into a grapqhl schema" do
@@ -29,7 +33,10 @@ defmodule Griffin.Model.ModuleTest do
         school { name }
       }
     }"
-    IO.inspect r
     assert status == :ok
+  end
+
+  test "run a model's resolver" do
+    Giffin.Model.Module.resolve WizardModel
   end
 end
