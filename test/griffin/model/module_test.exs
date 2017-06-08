@@ -1,4 +1,4 @@
-defmodule Griffin.Model.DSLTest do
+defmodule Griffin.Model.ModuleTest do
   @moduledoc false
   
   use ExUnit.Case
@@ -22,6 +22,14 @@ defmodule Griffin.Model.DSLTest do
   end
 
   test "converts a bunch of models into a grapqhl schema" do
-    IO.inspect Griffin.Model.DSL.graphqlize [WizardModel]
+    schema = Griffin.Model.Module.graphqlize [WizardModel]
+    {status, r} = GraphQL.execute schema, "{
+      wizard(name: \"Harry Potter\") {
+        name
+        school { name }
+      }
+    }"
+    IO.inspect r
+    assert status == :ok
   end
 end

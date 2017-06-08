@@ -21,7 +21,7 @@
 defmodule WizardModel do
   import Griffin.Model
   
-  @fields [
+  def fields(), do: [
     name: [:string, :required],
     school: [:map, of: [
       name: [:string],
@@ -35,10 +35,10 @@ defmodule WizardModel do
   def resolve(ctx) do
     ctx
       |> validate(@fields)
-      |> denormalize_spells
+      |> normalize_name
       |> persist
       |> join_spells
-      |> send_weclome_email
+      |> on([:create], send_weclome_email)
       |> to_response    
   end
 end
