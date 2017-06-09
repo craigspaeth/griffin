@@ -32,8 +32,9 @@ defmodule WizardModel do
     ]] 
   ]
 
-  def send_weclome_email(crud_op: crud_op) when crud_op == :create do
-    IO.puts
+  def send_weclome_email(ctx) when ctx.operation == :create do
+    IO.puts "Sending email to #{ctx.args.name}"
+    ctx
   end
 
   def resolve(ctx) do
@@ -46,6 +47,37 @@ defmodule WizardModel do
     |> to_response    
   end
 end
+````
+
+````elixir
+defmodule Model do
+  def say_hi(ctx) do
+    IO.puts "Say hello to our new friend #{ctx[:args][:name]}"
+    ctx
+  end
+
+  def fin(ctx) do
+    IO.puts "fin"
+    ctx
+  end
+
+  def on(ctx, ops, func) do
+    if Enum.member?(ops, ctx[:operation]), do: func.(ctx)
+  end
+
+  def on_create(ctx) do
+    # ...
+  end
+  
+  def resolve(ctx) do
+    ctx
+    |> validate(&fields/1)
+    |> on([:create], &say_hi/1)
+    |> fin
+  end
+end
+
+Model.resolve [operation: :create, args: [name: "Frank"]]
 ````
 
 ### View
