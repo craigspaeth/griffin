@@ -48,6 +48,7 @@ defmodule Griffin.Model.Module do
     def resolve(ctx) do
       # Pipe `ctx` through some middleware and return:
       {
+        :ok,
         ~s({"create":"json"}),
         ~s({"read":"json"}),
         ~s({"update":"json"}),
@@ -57,9 +58,13 @@ defmodule Griffin.Model.Module do
     end
   end
   ```
-
   """
   def resolve(model) do
-    
+    ctx = [args: [foo: :bar]]
+    {status, create, read, update, delete, list} = model.resolve ctx
+    # if status == :ok do
+    # else
+    #   "Fail"
+    # end
   end
 end

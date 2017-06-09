@@ -1,5 +1,9 @@
 # Griffin
 
+## Notes
+
+An MVC framework for the next generation that combines the latest ideas and tools from JS world (React + GraphQL) while trying to keep it somewhat familiar to Rails/Pheonix world (nomenclature, omakase, etc).
+
 ### Model
 
 - JSON-like data modeling which seamlessly hooks into GraphQL
@@ -32,8 +36,9 @@ defmodule WizardModel do
     ]] 
   ]
 
+  def send_weclome_email(ctx), do: ctx
   def send_weclome_email(ctx) when ctx.operation == :create do
-    IO.puts "Sending email to #{ctx.args.name}"
+    IO.puts "Sending email to #{ctx[:args][:name]}"
     ctx
   end
 
@@ -44,41 +49,31 @@ defmodule WizardModel do
     |> persist
     |> join_spells
     |> send_weclome_email
-    |> to_response    
+    |> to_response
   end
 end
 ````
 
-````elixir
-defmodule Model do
-  def say_hi(ctx) do
-    IO.puts "Say hello to our new friend #{ctx[:args][:name]}"
-    ctx
-  end
+#### CLI helpers
 
-  def fin(ctx) do
-    IO.puts "fin"
-    ctx
-  end
+CLI interface that's Active Record nomeclature
 
-  def on(ctx, ops, func) do
-    if Enum.member?(ops, ctx[:operation]), do: func.(ctx)
-  end
+```
+Model.find [some: :args] # Mimics GraphQL read query
+=> %{ name: "Harry Potter" } # Returns doc/struct
 
-  def on_create(ctx) do
-    # ...
-  end
-  
-  def resolve(ctx) do
-    ctx
-    |> validate(&fields/1)
-    |> on([:create], &say_hi/1)
-    |> fin
-  end
-end
+Model.where [some: :args] # Mimics GraphQL list query
+=> %{ name: "Harry Potter" } # Returns doc/struct
 
-Model.resolve [operation: :create, args: [name: "Frank"]]
-````
+Model.create [some: :args] # Mimics GraphQL create mutation
+=> %{ name: "Harry Potter" } # Returns doc/struct
+
+Model.update [some: :args] # Mimics GraphQL update mutation
+=> %{ name: "Harry Potter" } # Returns doc/struct
+
+Model.destroy [some: :args] # Mimics GraphQL delete mutation
+=> %{ name: "Harry Potter" } # Returns doc/struct
+```
 
 ### View
 - Isomorphic: On the server it outputs a string; On the client it hooks into VirtualDOM/Morphdom

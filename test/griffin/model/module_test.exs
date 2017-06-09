@@ -22,6 +22,7 @@ defmodule Griffin.Model.ModuleTest do
 
     def resolve(ctx) do
       IO.inspect ctx
+      {:ok, "foo", "bar", "baz", "bam", "boop"}
     end
   end
 
@@ -37,6 +38,6 @@ defmodule Griffin.Model.ModuleTest do
   end
 
   test "run a model's resolver" do
-    Giffin.Model.Module.resolve WizardModel
+    Griffin.Model.Module.resolve WizardModel
   end
 end
