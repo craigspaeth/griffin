@@ -24,6 +24,7 @@ An MVC framework for the next generation that combines the latest ideas and tool
 ````elixir
 defmodule WizardModel do
   import Griffin.Model
+  import Griffin.Model.Adapters.Memory
   
   def fields(), do: [
     name: [:string, :required],
@@ -35,7 +36,7 @@ defmodule WizardModel do
       ]]
     ]] 
   ]
-
+  
   def send_weclome_email(ctx), do: ctx
   def send_weclome_email(ctx) when ctx.operation == :create do
     IO.puts "Sending email to #{ctx[:args][:name]}"
@@ -47,10 +48,44 @@ defmodule WizardModel do
     |> validate(fields)
     |> normalize_name
     |> persist
-    |> join_spells
     |> send_weclome_email
     |> to_response
   end
+end
+````
+
+What would be a good interface for persistence lifecycle?
+
+````elixir
+defmodule User do
+  def resolve(ctx) do # or (struct, params \\ %{})
+    ctx
+    |> parse_query
+    |> cast(fields)
+    |> normalize_name
+    |> validate(fields)
+    |> persist
+    |> send_congrats_email
+    |> initialize_favorites
+    |> response_to_json
+  end
+end
+
+defmodule User do
+  plug :parse_query
+  plug :cast
+  plug :normalize_name
+  plug :validate
+  plug :persist
+  plug :send_congrats_email
+end
+
+defmodule User do
+  before_validate on: :all, :parse_query, cast: fields
+  before_validate on: [:create], :normalize_name
+  after_persist on: [:create] :send_congrats_email
+  after_persist on: [:create, :update], :initialize_favorites
+  after_persist on: :all, :response_to_json
 end
 ````
 
