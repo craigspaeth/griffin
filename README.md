@@ -8,6 +8,8 @@ An MVC framework for the next generation that combines the latest ideas and tool
 
 - JSON-like data modeling which seamlessly hooks into GraphQL
 - CRUD validation support (integrate from Vex/Ecto?)
+- CLI friendly CRUDL functions that skip extra context like auth token
+- CLI friendly "business logic" like `[args: %{body: "foo"}, res: %{}] |> Article.extract_tags |> Griffin.Model.to_db_statement`
 - Persistance agonstic with adapters
 
 #### Lifecycle of CRUD operation...
@@ -58,55 +60,66 @@ What would be a good interface for persistence lifecycle?
 
 ````elixir
 defmodule User do
-  def resolve(ctx) do # or (struct, params \\ %{})
-    ctx
-    |> parse_query
-    |> cast(fields)
-    |> normalize_name
-    |> validate(fields)
-    |> persist
-    |> send_congrats_email
-    |> initialize_favorites
-    |> response_to_json
+  import Griffin.Model
+  import Griffin.Model.Adapters.Memory
+
+  def fields(), do: [
+    name: [:string, :required],
+    school: [:map, of: [
+      name: [:string],
+      geo: [:map, of: [
+        lat: [:int, :required],
+        lng: [:int, :required]
+      ]]
+    ]]
+  ]
+
+  def send_weclome_email(ctx), do: ctx
+  def send_weclome_email(ctx), when ctx.operation == :create do
+    user = ctx.cursor
+    if ctx.args.email
   end
-end
 
-defmodule User do
-  plug :parse_query
-  plug :cast
-  plug :normalize_name
-  plug :validate
-  plug :persist
-  plug :send_congrats_email
-end
+  def resolve(ctx) do
+    ctx
+    |> validate(fields)
+    |> normalize_name
+    |> to_db_statement
+    |> send_weclome_email
+    |> set_updated_at
+  end
 
-defmodule User do
-  before_validate on: :all, :parse_query, cast: fields
-  before_validate on: [:create], :normalize_name
-  after_persist on: [:create] :send_congrats_email
-  after_persist on: [:create, :update], :initialize_favorites
-  after_persist on: :all, :response_to_json
+  def send_welcome_email(args) do
+    user = Adapter.find args[:_id]
+    if user do
+      email = Email.from "hi@foo.com"
+      {status, res} = Mailer.send email
+      
+      args
+    else
+      args
+    end 
+  end
+
+  def create(args) do
+    args
+    |> validate(:create, fields)
+    |> Adapter.create
+    |> send_welcome_email
+  end
+  defdelegate find(args), to: Adapter
+  defdelegate update(args), to: Adapter
+  defdelegate destroy(args), to: Adapter
+  defdelegate where(args), to: Adapter
 end
 ````
 
 #### CLI helpers
 
-CLI interface that's Active Record nomeclature
+CLI interface that's Active Record nomeclature `find`, `where`, `create`, `update`, `delete`.
 
 ```
 Model.find [some: :args] # Mimics GraphQL read query
-=> %{ name: "Harry Potter" } # Returns doc/struct
-
-Model.where [some: :args] # Mimics GraphQL list query
-=> %{ name: "Harry Potter" } # Returns doc/struct
-
-Model.create [some: :args] # Mimics GraphQL create mutation
-=> %{ name: "Harry Potter" } # Returns doc/struct
-
-Model.update [some: :args] # Mimics GraphQL update mutation
-=> %{ name: "Harry Potter" } # Returns doc/struct
-
-Model.destroy [some: :args] # Mimics GraphQL delete mutation
 => %{ name: "Harry Potter" } # Returns doc/struct
 ```
 
@@ -118,13 +131,14 @@ Model.destroy [some: :args] # Mimics GraphQL delete mutation
 
 ````elixir
 defmodule ArtistView
-  use Griffin.View
+  import Griffin.View
+  import ArtistController.{follow_artist}
 
-  defp before_mount
+  def before_mount() do
     # jQuery thing here
   end
 
-  defp styles
+  def styles() do
     %{
       container: %{
         width: "100%"
@@ -135,12 +149,12 @@ defmodule ArtistView
     }
   end
 
-  def render
-    div(:container,
-      h1(:header, "Artist name:"),
-      p(:name, state().artist.name),
-      button(%{ onclick: HomeController.follow_artist },
-        "Follow #{state().artist.name"))
+  def render() do
+    [div: :container,
+      [h1: :header, "Artist name:"],
+      [p: :name, state.artist.name],
+      [button: [onclick: &follow_artist/1],
+        "Follow #{state.artist.name"]]
   end
 end
 ````
@@ -151,14 +165,14 @@ end
 defmodule HomeController
   use Griffin.Controller
 
-  def follow_artist
+  def follow_artist(event)
     %{ name: name } = mutate """{
       follow_artist(id: #{state().artist._id}) {
         name
       }
     }
     """
-    set_state %{ state() | name: name }
+    set_state %{ state | name: name }
   end
 
   def home
