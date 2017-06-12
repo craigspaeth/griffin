@@ -66,6 +66,7 @@ defmodule Griffin.Model.DSL do
     list: list
   ) do
     # Read Query
+    IO.inspect read
     read_field = %{
       type: %GraphQL.Type.ObjectType{
         name: "#{String.capitalize to_string namespace}QueryType",

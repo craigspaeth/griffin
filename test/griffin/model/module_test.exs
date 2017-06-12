@@ -25,19 +25,20 @@ defmodule Griffin.Model.ModuleTest do
 
     def resolve(ctx) do
       ctx
-      |> validate(&fields/0)
+      |> validate(fields())
       |> to_db_statement
     end
   end
 
   test "converts a bunch of models into a grapqhl schema" do
     schema = Griffin.Model.Module.graphqlize [WizardModel]
-    {status, _} = GraphQL.execute schema, "{
+    {status, res} = GraphQL.execute schema, "{
       wizard(name: \"Harry Potter\") {
         name
         school { name }
       }
     }"
+    IO.inspect res
     assert status == :ok
   end
 
@@ -66,7 +67,7 @@ defmodule Griffin.Model.ModuleTest do
     }
   end
 
-  test "surfaces validation erros through a model's resolver" do
+  test "surfaces validation errors through a model's resolver" do
     Griffin.Model.Adapters.Memory.init
     ctx = Griffin.Model.Module.resolve WizardModel, :create, %{
       name: "Harry"

@@ -13,7 +13,7 @@ defmodule Griffin.Model do
   """
   def validate(%{errs: errs} = ctx, _) when length(errs) > 0, do: ctx
   def validate(ctx, fields) do
-    fields = DSL.for_crud_op fields.(), ctx.op
+    fields = DSL.for_crud_op fields, ctx.op
     is_valid = Validations.valid? ctx.args, fields
     if is_valid do
       ctx

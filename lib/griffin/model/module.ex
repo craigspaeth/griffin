@@ -15,11 +15,11 @@ defmodule Griffin.Model.Module do
       %{query: query, mutation: mutation} = Griffin.Model.DSL.to_graphql_map(
         namespace: model.namespace,
         fields: model.fields,
-        create: noop,
-        read: noop,
-        update: noop,
-        delete: noop,
-        list: noop
+        create: fn (_, args, _) -> resolve(model, :create, args).res end,
+        read: fn (_, args, _) -> resolve(model, :read, args).res end,
+        update: fn (_, args, _) -> resolve(model, :update, args).res end,
+        delete: fn (_, args, _) -> resolve(model, :delete, args).res end,
+        list: fn (_, args, _) -> resolve(model, :list, args).res end
       )
       {query, mutation}
     end
@@ -36,6 +36,10 @@ defmodule Griffin.Model.Module do
         }
       }
     end
+  end
+  
+  defp resolver(model, crud_op) do
+    
   end
   
   @doc """
@@ -130,13 +134,12 @@ defmodule Griffin.Model.Module do
   next eventually returning a `ctx` map to be used for a response.
   """
   def resolve(model, crud_op, args) do
-    ctx = %{
+    model.resolve %{
       _model: model,
       args: args,
       res: %{},
       op: crud_op,
       errs: []
     }
-    model.resolve ctx
   end
 end

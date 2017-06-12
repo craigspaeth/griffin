@@ -16,9 +16,9 @@ An MVC framework for the next generation that combines the latest ideas and tool
 - [ ] GQL to Keylist request
 - --
 - [x] Validate
-- [ ] Pre Middleware
-- [ ] Peristence
-- [ ] Post Middleware
+- [x] Pre Middleware
+- [x] Peristence
+- [x] Post Middleware
 - [ ] Response to Keylist response
 - --
 - [ ] Convert response to JSON
@@ -53,64 +53,6 @@ defmodule WizardModel do
     |> send_weclome_email
     |> to_response
   end
-end
-````
-
-What would be a good interface for persistence lifecycle?
-
-````elixir
-defmodule User do
-  import Griffin.Model
-  import Griffin.Model.Adapters.Memory
-
-  def fields(), do: [
-    name: [:string, :required],
-    school: [:map, of: [
-      name: [:string],
-      geo: [:map, of: [
-        lat: [:int, :required],
-        lng: [:int, :required]
-      ]]
-    ]]
-  ]
-
-  def send_weclome_email(ctx), do: ctx
-  def send_weclome_email(ctx), when ctx.operation == :create do
-    user = ctx.cursor
-    if ctx.args.email
-  end
-
-  def resolve(ctx) do
-    ctx
-    |> validate(fields)
-    |> normalize_name
-    |> to_db_statement
-    |> send_weclome_email
-    |> set_updated_at
-  end
-
-  def send_welcome_email(args) do
-    user = Adapter.find args[:_id]
-    if user do
-      email = Email.from "hi@foo.com"
-      {status, res} = Mailer.send email
-      
-      args
-    else
-      args
-    end 
-  end
-
-  def create(args) do
-    args
-    |> validate(:create, fields)
-    |> Adapter.create
-    |> send_welcome_email
-  end
-  defdelegate find(args), to: Adapter
-  defdelegate update(args), to: Adapter
-  defdelegate destroy(args), to: Adapter
-  defdelegate where(args), to: Adapter
 end
 ````
 

@@ -22,7 +22,7 @@ defmodule Griffin.Model.Adapters do
     updates the response.
     """
     def to_db_statement(%{errs: errs} = ctx, _) when length(errs) > 0, do: ctx
-    def to_db_statement(ctx) do
+    def to_db_statement(%{op: op} = ctx) when op == :create do
       doc = insert ctx._model.namespace, ctx.args
       %{ctx | res: doc}
     end
@@ -41,11 +41,11 @@ defmodule Griffin.Model.Adapters do
       Agent.get(__MODULE__, &Map.get(&1, col)) |> List.last
     end
 
-    defp get(col, id) do
-      docs = Agent.get __MODULE__, &Map.get(&1, col)
-      docs
-      |> Enum.filter(&Map.get(&1, :id) == id)
-      |> List.first
-    end
+    # defp get(col, id) do
+    #   docs = Agent.get __MODULE__, &Map.get(&1, col)
+    #   docs
+    #   |> Enum.filter(&Map.get(&1, :id) == id)
+    #   |> List.first
+    # end
   end
 end
