@@ -148,4 +148,15 @@ defmodule Griffin.Model.ValidationsTest do
     assert valid? %{email: "foo@bar.com"}, schema
     assert not valid? %{email: "foo@bar"}, schema
   end
+  
+  test "returns errors" do
+    schema = [email: [:string, :email]]
+    assert errors(%{email: "foo@bar"}, schema) == [
+      { 
+        :error,
+        "email with value \"foo@bar\" is invalid " <>
+        "according to the rule :email"
+      }
+    ]
+  end
 end

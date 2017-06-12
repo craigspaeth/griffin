@@ -7,6 +7,9 @@ defmodule Griffin.Model.ModuleTest do
     @moduledoc """
     A test wizard model
     """
+    import Griffin.Model
+    import Griffin.Model.Adapters.Memory
+
     def namespace, do: :wizard
 
     def fields, do: [
@@ -21,13 +24,15 @@ defmodule Griffin.Model.ModuleTest do
     ]
 
     def resolve(ctx) do
-      {:ok, "foo", "bar", "baz", "bam", "boop"}
+      ctx
+      |> validate(&fields/0)
+      |> to_db_statement
     end
   end
 
   test "converts a bunch of models into a grapqhl schema" do
     schema = Griffin.Model.Module.graphqlize [WizardModel]
-    {status, r} = GraphQL.execute schema, "{
+    {status, _} = GraphQL.execute schema, "{
       wizard(name: \"Harry Potter\") {
         name
         school { name }
@@ -37,7 +42,36 @@ defmodule Griffin.Model.ModuleTest do
   end
 
   test "run a model's resolver" do
-    {res, create_res, _, _, _, _} = Griffin.Model.Module.resolve WizardModel
-    IO.puts create_res
+    Griffin.Model.Adapters.Memory.init
+    ctx = Griffin.Model.Module.resolve WizardModel, :create, %{
+      name: "Harry Potter",
+      school: %{
+        name: "Hogwarts",
+        geo: %{
+          lat: 10,
+          lng: 20
+        }
+      }
+    }
+    assert ctx.res == %{
+      id: 0,
+      name: "Harry Potter",
+      school: %{
+        name: "Hogwarts",
+        geo: %{
+          lat: 10,
+          lng: 20
+        }
+      }
+    }
+  end
+
+  test "surfaces validation erros through a model's resolver" do
+    Griffin.Model.Adapters.Memory.init
+    ctx = Griffin.Model.Module.resolve WizardModel, :create, %{
+      name: "Harry"
+    }
+    [{_, msg}] = ctx.errs
+    assert String.match? msg, ~r/school with value nil is invalid/
   end
 end

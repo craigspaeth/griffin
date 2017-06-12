@@ -130,7 +130,6 @@ defmodule Griffin.Model do
         delete: noop,
         list: noop
       )
-      IO.inspect schema_map
     end
     models
   end

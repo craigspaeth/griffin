@@ -24,8 +24,27 @@ defmodule Griffin.Model.Validations do
   end
 
   @doc """
-  Validates a map of json-like data against a dsl
+  Returns true/false if there are any error tuples returned from `&errors/2`
+  """
+  def valid?(data, dsl) do
+    Enum.empty? errors data, dsl
+  end
+
+  @doc """
+  Pulls the error tuples out of &results/2 
+  """
+  def errors(data, dsl) do
+    Enum.filter results(data, dsl), fn {status, _} -> status == :error end
+  end
+
+  @doc """
+  Validates a map of json-like data against a dsl returning results in a list of
+  tuples containing ok/errors e.g. 
   
+  ```
+  [{:ok, :name},{:error, :password, "fails min: 4"}].
+  ```
+
   ## Parameters
 
     - data: Map of GraphQL/JSON-like data
@@ -33,16 +52,19 @@ defmodule Griffin.Model.Validations do
 
   ## Examples
 
-    iex> Griffin.Model.Validations.valid? %{name: "Bob"}, [name: [:string, :required]]
+    iex> Griffin.Model.Validations.valid?(
+           %{name: "Bob"},
+           [name: [:string, :required]]
+         )
     true
 
   """
-  def valid?(data, dsl) do
-    valids = for {attr, validation} <- dsl do
+  def results(data, dsl) do
+    res = for {attr, validation} <- dsl do
 
       # Validate the first atom in the DSL is a valid GraphQL type
       type = Enum.at validation, 0
-      valid_type = if Enum.member? [
+      types = [
         :int,
         :float,
         :string,
@@ -54,49 +76,64 @@ defmodule Griffin.Model.Validations do
         # TODO: Think about how these types might work
         # :interface
         # :enum
-      ], type do
-        true
+      ]
+      valid_type = if Enum.member? types, type do
+        {:ok, attr}
       else
-        false
+        {:error, "Type #{type} must be one of #{types}"}
       end
 
       # Check the DSL of the rules following the type passes validation
       rules = Enum.slice validation, 1..-1
       valid_rules = for rule <- rules do
         try do
-          cond do
+          is_valid = cond do
 
-            # Single-arg rules like
+            # Zero airity rules like
             # [name: [:string, :required]]
             is_atom rule ->
               rule_name = rule
               apply Griffin.Model.Validations, rule_name, [type, data[attr]]
             
-            # Single-arg function like
-            # [name: is_caps]
+            # Zero arity function like
+            # [name: [:string, &is_caps/0]]
             is_function rule ->
               rule.(type, data[attr])
 
-            # Multi-arg function like
+            # Single airity function like
             # [name: [:string, [starts_with_letter "a"]]]
             is_list rule ->
               [func, arg] = rule
               func.(type, data[attr], arg)
 
-            # Multi-arg rules like
+            # Single Keylist pair airty rules like
             # [name: [:string, min: 10]]
-            true ->
+            is_tuple rule ->
               rule_name = rule |> Tuple.to_list |> List.first
               rule_args = rule |> Tuple.to_list |> Enum.slice(1..-1)
-              apply Griffin.Model.Validations, rule_name, [type, data[attr]] ++ rule_args
+              apply(
+                Griffin.Model.Validations,
+                rule_name,
+                [type, data[attr]] ++ rule_args
+              )
+            
+            # Unsupported style
+          end
+          if is_valid do
+            {:ok, attr}
+          else
+            msg = 
+              "#{attr} with value #{inspect data[attr]} " <>
+              "is invalid according to the rule #{inspect rule}"
+            {:error, msg}
           end
         rescue
-          FunctionClauseError -> false
+          FunctionClauseError -> {:error, "#{attr} missing validation function"}
         end
       end
-      valid_type and Enum.all? valid_rules
+      [valid_type] ++ valid_rules
     end
-    Enum.all? valids
+    List.flatten res
   end
 
   # Validation functions used by valid?/2
