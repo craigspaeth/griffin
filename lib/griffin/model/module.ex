@@ -11,15 +11,14 @@ defmodule Griffin.Model.Module do
   """
   def graphqlize(models) do
     pairs = for model <- models do
-      noop = fn (_, _, _) -> nil end
       %{query: query, mutation: mutation} = Griffin.Model.DSL.to_graphql_map(
         namespace: model.namespace,
         fields: model.fields,
-        create: fn (_, args, _) -> resolve(model, :create, args).res end,
-        read: fn (_, args, _) -> resolve(model, :read, args).res end,
-        update: fn (_, args, _) -> resolve(model, :update, args).res end,
-        delete: fn (_, args, _) -> resolve(model, :delete, args).res end,
-        list: fn (_, args, _) -> resolve(model, :list, args).res end
+        create: resolver(model, :create),
+        read: resolver(model, :read),
+        update: resolver(model, :update),
+        delete: resolver(model, :delete),
+        list: resolver(model, :list)
       )
       {query, mutation}
     end
@@ -32,14 +31,14 @@ defmodule Griffin.Model.Module do
         },
         mutation: %GraphQL.Type.ObjectType{
           name: "RootMutationType",
-          fields: Map.merge(acc.mutation, mutation)
+          fields: Map.merge(acc.mutation.fields, mutation)
         }
       }
     end
   end
-  
+
   defp resolver(model, crud_op) do
-    
+    fn (_, args, _) -> resolve(model, crud_op, args).res end
   end
   
   @doc """

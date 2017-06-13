@@ -31,15 +31,14 @@ defmodule Griffin.Model.ModuleTest do
   end
 
   test "converts a bunch of models into a grapqhl schema" do
+    Griffin.Model.Adapters.Memory.init
     schema = Griffin.Model.Module.graphqlize [WizardModel]
-    {status, res} = GraphQL.execute schema, "{
-      wizard(name: \"Harry Potter\") {
-        name
-        school { name }
-      }
-    }"
-    IO.inspect res
+    {status, res} = GraphQL.execute schema, "mutation Wizard {
+      create_wizard(name: \"Harry Potter\") { name }
+    }
+    "
     assert status == :ok
+    assert res.data["create_wizard"]["name"] == "Harry Potter"
   end
 
   test "run a model's resolver" do

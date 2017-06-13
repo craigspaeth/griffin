@@ -26,6 +26,10 @@ defmodule Griffin.Model.Adapters do
       doc = insert ctx._model.namespace, ctx.args
       %{ctx | res: doc}
     end
+    def to_db_statement(%{op: op} = ctx) when op == :read do
+      doc = find ctx._model.namespace, ctx.args
+      %{ctx | res: doc}
+    end
 
     defp insert(col, doc) do
       Agent.update __MODULE__, fn map ->
@@ -41,11 +45,14 @@ defmodule Griffin.Model.Adapters do
       Agent.get(__MODULE__, &Map.get(&1, col)) |> List.last
     end
 
-    # defp get(col, id) do
-    #   docs = Agent.get __MODULE__, &Map.get(&1, col)
-    #   docs
-    #   |> Enum.filter(&Map.get(&1, :id) == id)
-    #   |> List.first
-    # end
+    defp find(col, args) do
+      docs = Agent.get __MODULE__, &Map.get(&1, col)
+      docs || []
+      |> Enum.filter(fn (doc) ->
+        subset = Map.take doc, Map.keys(args)
+        subset == args
+      end)
+      |> List.first
+    end
   end
 end

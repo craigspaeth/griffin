@@ -13,15 +13,15 @@ An MVC framework for the next generation that combines the latest ideas and tool
 - Persistance agonstic with adapters
 
 #### Lifecycle of CRUD operation...
-- [ ] GQL to Keylist request
+
+- [x] GQL to Keylist request
 - --
 - [x] Validate
 - [x] Pre Middleware
 - [x] Peristence
 - [x] Post Middleware
-- [ ] Response to Keylist response
 - --
-- [ ] Convert response to JSON
+- [x] Convert response to JSON
 
 ````elixir
 defmodule WizardModel do
@@ -65,6 +65,36 @@ Model.find [some: :args] # Mimics GraphQL read query
 => %{ name: "Harry Potter" } # Returns doc/struct
 ```
 
+### Controller
+
+```elixir
+defmodule HomeController
+  use Griffin.Controller
+
+  def follow_artist(event)
+    %{ name: name } = mutate """{
+      follow_artist(id: #{state().artist._id}) {
+        name
+      }
+    }
+    """
+    set_state %{ state | name: name }
+  end
+
+  def home(conn) do
+    %{ artists: artists } = query """{
+      artists(limit: 10) {
+        id
+        name
+      }
+    }
+    """
+    set_state conn, %{ state | artists: artists }
+    render conn, HomeView
+  end
+end
+```
+
 ### View
 - Isomorphic: On the server it outputs a string; On the client it hooks into VirtualDOM/Morphdom
 - `state()` is an Agent that references a single immutable map
@@ -100,36 +130,6 @@ defmodule ArtistView
   end
 end
 ````
-
-### Controller
-
-```elixir
-defmodule HomeController
-  use Griffin.Controller
-
-  def follow_artist(event)
-    %{ name: name } = mutate """{
-      follow_artist(id: #{state().artist._id}) {
-        name
-      }
-    }
-    """
-    set_state %{ state | name: name }
-  end
-
-  def home
-    %{ artists: artists } = query """{
-      artists(limit: 10) {
-        id
-        name
-      }
-    }
-    """
-    set_state %{ state() | artists: artists }
-    render HomeView
-  end
-end
-```
 
 ### Apps
 
