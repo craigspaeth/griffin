@@ -77,7 +77,7 @@ Model.find [some: :args] # Mimics GraphQL read query
 defmodule App.WizardApp.UIModel do
   import Griffin.Model
 
-  def init, do: %{
+  def state, do: get_state(App.WizardApp.UIModel) || %{
     page: :index,
     wizards: []
   }
@@ -98,7 +98,7 @@ defmodule App.WizardApp.UIModel do
         school
       }
     } """
-    set wizards: wizards, me: me 
+    %{state | wizards: wizards, me: me} 
   end
 
   def follow_wizard(id) do
@@ -109,7 +109,7 @@ defmodule App.WizardApp.UIModel do
         favorites: #{me.favorites ++ %{model: "wizard", model_id: id}}
       ) { favorites }
     } """
-    set favorites: me.favorites ++ favorites, page: :index
+    %{state | favorites: me.favorites ++ favorites}
   end
 end
 ```
@@ -121,11 +121,13 @@ end
 
 ```elixir
 defmodule App.WizardApp.Controller do
-  import App.Model
+  alias App.WizardApp.UIModel, as: Model
 
   def index(conn, params) do
     auth_token = get_session conn, :auth_token
-    Model.load_index auth_token
+    state
+    |> Model.load_index auth_token
+    |> Map.put page: :index
   end
 
   def follow_wizard(event), do: fn (id) ->
@@ -151,7 +153,7 @@ defmodule App.WizardApp.Views.Wizards do
         [:li@item, [
           [:h1@header, "Welcome #{model.name}"],
           [:a@name, [href: "/wizard/#{wizard.id}"], "See #{wizard.name}'s profile >"],
-          [:button, [onclick: follow_wizard], "<3 #{wizard.name}"]]]
+          [:button, [onclick: follow_wizard(wizard.id)], "<3 #{wizard.name}"]]]
       end]
   end
 end
