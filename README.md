@@ -4,9 +4,9 @@
 
 An MVC framework for the next generation that combines the latest ideas and tools from JS world (React + GraphQL) while trying to keep it somewhat familiar to Rails/Pheonix world (nomenclature, omakase, etc).
 
-## MMVC Architecture
+## MVVMC Architecture
 
-### Data Models
+### Models
 
 - JSON-like data modeling which seamlessly hooks into GraphQL
 - CRUD validation support (integrate from Vex/Ecto?)
@@ -67,22 +67,25 @@ Model.find [some: :args] # Mimics GraphQL read query
 => %{ name: "Harry Potter" } # Returns doc/struct
 ```
 
-### UI Model
+### View Model
 
 - Encapsulate UI state in is a big single immutable map
 - Data fetch/send over network APIs (mainly GraphQL)
 - Client-side "business logic"
+- `set` will trigger updates to an Agent storing the model state (a single agent on the client-side)
+- Model functions return the model (from `set`) to 
 
 ```elixir
-defmodule App.WizardApp.UIModel do
+defmodule App.WizardApp.ViewModel do
   import Griffin.Model
 
-  def state, do: get_state(App.WizardApp.UIModel) || %{
+  def init, do: %{
     page: :index,
     wizards: []
   }
 
   def load_index(auth_token) do
+    set loading: true
     %{
       wizards: wizards,
       user: me
@@ -98,39 +101,58 @@ defmodule App.WizardApp.UIModel do
         school
       }
     } """
-    %{state | wizards: wizards, me: me} 
+    set loading: false, wizards: wizards, me: me 
   end
 
   def follow_wizard(id) do
-    %{ favorites } = gql """ {
+    set loading: true
+    %{ favorites } = gql! """ {
       update_user(
         id: #{get.me.id}
         auth_token: #{me.auth_token}
         favorites: #{me.favorites ++ %{model: "wizard", model_id: id}}
       ) { favorites }
     } """
-    %{state | favorites: me.favorites ++ favorites}
+    set loading: false, favorites: me.favorites ++ favorites
   end
 end
 ```
 
 ### Controller
 
-- Quickly converts router `conn`, websocket events, or UI `event` info into model commands
+- Can be either server/client/shared to handle breadth of input (HTTP/Browser/Routing)
+- Takes router info, websocket events, UI events, etc. as input and sends commands to model and/or returns html in shared case
 - Delegates data/persistence functionality to model
 
 ```elixir
-defmodule App.WizardApp.Controller do
-  alias App.WizardApp.UIModel, as: Model
+defmodule App.WizardApp.Controller.Shared do
+  import Griffin.Controller.Shared
+  alias App.WizardApp.ViewModel, as: Model
 
   def index(conn, params) do
     auth_token = get_session conn, :auth_token
-    state
-    |> Model.load_index auth_token
-    |> Map.put page: :index
+    render conn, Model.load_index auth_token
+  end
+end
+
+defmodule App.WizardApp.Controller.Server do
+  import Griffin.Controller.Server
+  alias App.WizardApp.ViewModel, as: Model
+
+  def stream_file(conn, params) do
+    stream_file conn, FS.find "file"
+  end
+end
+
+defmodule App.WizardApp.Controller.Client do
+  import Griffin.Controller.Shared
+  alias App.WizardApp.ViewModel, as: Model
+
+  def new_bid(event) do
+    Model.accept_new_bid event.bid.id
   end
 
-  def follow_wizard(event), do: fn (id) ->
+  def follow_wizard(event, id) do
     Model.follow_wizard id
   end
 end
@@ -145,15 +167,13 @@ end
 
 ```elixir
 defmodule App.WizardApp.Views.Wizards do
-  import App.WizardApp.Controller
-
   def render(model) do
     [:ul@list, 
       for wizard <- model.wizards do
         [:li@item, [
           [:h1@header, "Welcome #{model.name}"],
           [:a@name, [href: "/wizard/#{wizard.id}"], "See #{wizard.name}'s profile >"],
-          [:button, [onclick: follow_wizard(wizard.id)], "<3 #{wizard.name}"]]]
+          [:button, [onclick: [:follow_wizard, wizard.id]], "<3 #{wizard.name}"]]]
       end]
   end
 end
@@ -166,27 +186,51 @@ end
 - Separated by page reloads... (or not b/c enforced stateless?)
 - A root "project" combines apps to be passed into Cowboy
 
+Ideally
 ```elixir
-defmodule App.WizardApp.App do
-  import Griffin.App
-  alias App.WizardApp.Controller
+defmodule App.WizardApp do
+  def server, do: App.WizardApp.Server
+  def client, do: App.WizardApp.Client
+  def shared, do: App.WizardApp.Shared
+
+  get "/api", graphqlize [DataModels.Wizard]
+  get "/, render shared.index
+  use App.WizardApp.ViewModel
+  use App.WizardApp.Views.Root
+  on "socket_event", client.new_bid
+end
+```
+
+Practically
+```elixir
+defmodule App.WizardApp.Server do
+  import Griffin.App.Server
   alias App.WizardApp.DataModels
 
   plug Foo
-
-  get "/", Controller.index
   get "/api", graphqlize [DataModels.Wizard]
+end
+
+defmodule App.WizardApp.Shared do
+  import Griffin.App.Shared
+  alias App.WizardApp.Controller
+
+  get "/", render Controller.index
+  use App.WizardApp.Views.Root
+  use App.WizardApp.ViewModel
+end
+
+defmodule App.WizardApp.Client do
+  import Griffin.App.Client
+  alias App.WizardApp.Controller
 
   on "socket_event", Controller.new_bid
-
-  use App.WizardApp.Views.Root
-  use App.WizardApp.UIModel
 end
 
 defmodule MyProject do
   import Griffin.Project
 
-  mount App.WizardApp.App
+  mount App.WizardApp
 end
 ```
 
