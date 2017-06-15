@@ -176,6 +176,7 @@ defmodule App.WizardApp.Views.Wizards do
           [:button, [onclick: [:follow_wizard, wizard.id]], "<3 #{wizard.name}"]]]
       end]
   end
+  
 end
 ```
 
