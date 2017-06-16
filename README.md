@@ -1,12 +1,16 @@
 # Griffin
 
+## Getting Started
+
+Test with `mix test.watch` and run with `mix run --no-halt`
+
 ## Notes
 
 An MVC framework for the next generation that combines the latest ideas and tools from JS world (React + GraphQL) while trying to keep it somewhat familiar to Rails/Pheonix world (nomenclature, omakase, etc).
 
 ## MVVMC Architecture
 
-### Models
+### Model
 
 - JSON-like data modeling which seamlessly hooks into GraphQL
 - CRUD validation support (integrate from Vex/Ecto?)
@@ -27,9 +31,9 @@ An MVC framework for the next generation that combines the latest ideas and tool
 
 ````elixir
 defmodule App.WizardApp.DataModels.Wizard do
-  import Griffin.DataModel
+  import Griffin.Model
   import Griffin.Model.Adapters.Memory
-  
+
   def fields(), do: [
     name: [:string, :required],
     school: [:map, of: [
@@ -38,9 +42,9 @@ defmodule App.WizardApp.DataModels.Wizard do
         lat: [:int, :required],
         lng: [:int, :required]
       ]]
-    ]] 
+    ]]
   ]
-  
+
   def send_weclome_email(ctx), do: ctx
   def send_weclome_email(ctx) when ctx.operation == :create do
     IO.puts "Sending email to #{ctx[:args][:name]}"
@@ -71,9 +75,9 @@ Model.find [some: :args] # Mimics GraphQL read query
 
 - Encapsulate UI state in is a big single immutable map
 - Data fetch/send over network APIs (mainly GraphQL)
-- Client-side "business logic"
-- `set` will trigger updates to an Agent storing the model state (a single agent on the client-side)
-- Model functions return the model (from `set`) to 
+- UI "business logic"
+- `set` is a convenience for updating a map, on the client-side it will trigger updates to an Agent that causes re-renders
+- Model functions are `(model) -> model` returning an updated map for server-side convenience
 
 ```elixir
 defmodule App.WizardApp.ViewModel do
@@ -84,8 +88,8 @@ defmodule App.WizardApp.ViewModel do
     wizards: []
   }
 
-  def load_index(auth_token) do
-    set loading: true
+  def load_index(model, auth_token) do
+    set model, loading: true
     %{
       wizards: wizards,
       user: me
@@ -101,11 +105,11 @@ defmodule App.WizardApp.ViewModel do
         school
       }
     } """
-    set loading: false, wizards: wizards, me: me 
+    set model, loading: false, wizards: wizards, me: me
   end
 
-  def follow_wizard(id) do
-    set loading: true
+  def follow_wizard(model, id) do
+    set model, loading: true
     %{ favorites } = gql! """ {
       update_user(
         id: #{get.me.id}
@@ -113,7 +117,28 @@ defmodule App.WizardApp.ViewModel do
         favorites: #{me.favorites ++ %{model: "wizard", model_id: id}}
       ) { favorites }
     } """
-    set loading: false, favorites: me.favorites ++ favorites
+    set model, loading: false, favorites: me.favorites ++ favorites
+  end
+end
+```
+
+### Views
+
+- Isomorphic: On the server it outputs a string; On the client it hooks into VirtualDOM/Morphdom/ReactXP
+- Views are the output of a single immutable state map
+- Component lifecycle hooks?
+- A Re-agent like DOM DSL...
+
+```elixir
+defmodule App.WizardApp.Views.Wizards do
+  def render(model) do
+    [:ul@list,
+      for wizard <- model.wizards do
+        [:li@item, [
+          [:h1@header, "Welcome #{model.name}"],
+          [:a@name, [href: "/wizard/#{wizard.id}"], "See #{wizard.name}'s profile >"],
+          [:button, [onclick: [:follow_wizard, wizard.id]], "<3 #{wizard.name}"]]]
+      end]
   end
 end
 ```
@@ -129,9 +154,10 @@ defmodule App.WizardApp.Controller.Shared do
   import Griffin.Controller.Shared
   alias App.WizardApp.ViewModel, as: Model
 
-  def index(conn, params) do
+  def index(ctx) do
     auth_token = get_session conn, :auth_token
-    render conn, Model.load_index auth_token
+    model = Model.init |> Model.load_index(auth_token)
+    render conn, model
   end
 end
 
@@ -155,28 +181,6 @@ defmodule App.WizardApp.Controller.Client do
   def follow_wizard(event, id) do
     Model.follow_wizard id
   end
-end
-```
-
-### Views
-
-- Isomorphic: On the server it outputs a string; On the client it hooks into VirtualDOM/Morphdom/ReactXP
-- Views are the output of a single immutable state map
-- Component lifecycle hooks?
-- A Re-agent like DOM DSL...
-
-```elixir
-defmodule App.WizardApp.Views.Wizards do
-  def render(model) do
-    [:ul@list, 
-      for wizard <- model.wizards do
-        [:li@item, [
-          [:h1@header, "Welcome #{model.name}"],
-          [:a@name, [href: "/wizard/#{wizard.id}"], "See #{wizard.name}'s profile >"],
-          [:button, [onclick: [:follow_wizard, wizard.id]], "<3 #{wizard.name}"]]]
-      end]
-  end
-  
 end
 ```
 

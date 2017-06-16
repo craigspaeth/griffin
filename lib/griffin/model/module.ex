@@ -14,11 +14,11 @@ defmodule Griffin.Model.Module do
       %{query: query, mutation: mutation} = Griffin.Model.DSL.to_graphql_map(
         namespace: model.namespace,
         fields: model.fields,
-        create: resolver(model, :create),
-        read: resolver(model, :read),
-        update: resolver(model, :update),
-        delete: resolver(model, :delete),
-        list: resolver(model, :list)
+        create: &Griffin.Model.Module.resolver/3,
+        read: &Griffin.Model.Module.resolver/3,
+        update: &Griffin.Model.Module.resolver/3,
+        delete: &Griffin.Model.Module.resolver/3,
+        list: &Griffin.Model.Module.resolver/3
       )
       {query, mutation}
     end
@@ -37,14 +37,15 @@ defmodule Griffin.Model.Module do
     end
   end
 
-  defp resolver(model, crud_op) do
-    fn (_, args, _) -> resolve(model, crud_op, args).res end
-  end
-  
+  def resolver(_, _, _), do: %{}
+  # defp resolver(model, crud_op) do
+  #   fn (_, args, _) ->  end
+  # end
+
   @doc """
   Accepts a model module and passes a `ctx` map through its `resolve`
-  function. This `resolve` function is expected to return `ctx` with 
-  a Poison encodable List or Map in `ctx.res` and/or an errors List in 
+  function. This `resolve` function is expected to return `ctx` with
+  a Poison encodable List or Map in `ctx.res` and/or an errors List in
   `ctx.errors`.
 
   ```
@@ -64,17 +65,17 @@ defmodule Griffin.Model.Module do
   end
   ```
 
-  `ctx` is a map that contains the information of the operation. This map is 
+  `ctx` is a map that contains the information of the operation. This map is
   a hetergenous blob of relevant data depending on the operation and context of
-  the operation. For instance it can minimally contain `ctx.args` which are the 
+  the operation. For instance it can minimally contain `ctx.args` which are the
   arguments to the CRUDL operation and an empty `ctx.res` map and `ctx.errors`
-  list expected to be filled in. In the case of an HTTP GraphQL request it may 
-  contain headers, a logged in user, or a number of other things the user can 
+  list expected to be filled in. In the case of an HTTP GraphQL request it may
+  contain headers, a logged in user, or a number of other things the user can
   attach to the context by agumenting the map as it pipes through `resolve`.
 
   This allows a lot of flexibility when composing behavior and passing through
   dependencies. For example, creating a user model may involve validating,
-  saving data to the database, sending a confirmation email, and confirming 
+  saving data to the database, sending a confirmation email, and confirming
   that email upon a subsequent update. That might be expressed like so...
 
   ```
@@ -96,7 +97,7 @@ defmodule Griffin.Model.Module do
   end
   ```
 
-  One can build on top of this simple foundation for more intricate design 
+  One can build on top of this simple foundation for more intricate design
   patterns using various native Elixir techniques like pattern matching, macros,
   better function composing, etc. For instance one could acheive something more
   familiar to Active Recod-style callbacks like so...

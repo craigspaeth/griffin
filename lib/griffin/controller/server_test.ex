@@ -9,5 +9,6 @@ defmodule Griffin.Controller.Server do
   """
   def render(view, model) do
     IO.inspect view
+    IO.inspect model
   end
 end
