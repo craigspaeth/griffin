@@ -7,11 +7,7 @@ defmodule Model do
   def namespace, do: :wizard
 
   def fields, do: [
-    name: [:string, :required],
-    meta: [:map, of: [
-      school: [:string],
-      patronus: [:string]
-    ]]
+    name: [:string, :required]
   ]
 
   def resolve(ctx) do
@@ -83,6 +79,9 @@ defmodule MyRouter do
   @moduledoc false
   use Plug.Router
 
+  plug :match
+  plug :dispatch
+
   get "/" do
     model = ViewModel.init
     |> ViewModel.load_index
@@ -92,7 +91,14 @@ defmodule MyRouter do
     |> send_resp(200, html)
   end
 
-  forward "/api", to: GraphQL.Plug, schema: {Schema, :schema}
+  match "/api" do
+    opts = GraphQL.Plug.init schema: {Schema, :schema}
+    GraphQL.Plug.call conn, opts
+  end
+
+  match _ do
+    send_resp conn, 404, "oops"
+  end
 end
 
 defmodule MyApp do
@@ -100,6 +106,7 @@ defmodule MyApp do
   use Application
 
   def start(_type, _args) do
+    Griffin.Model.Adapters.Memory.init
     children = [
       Plug.Adapters.Cowboy.child_spec(:http, MyRouter, [], [port: 4001])
     ]

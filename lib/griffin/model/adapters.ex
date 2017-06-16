@@ -39,7 +39,7 @@ defmodule Griffin.Model.Adapters do
           {false, true} -> Map.put doc, :id, length(old_col)
           {_, false} -> doc
         end
-        new_col = if old_col, do: map[col] ++ [doc], else: [doc] 
+        new_col = if old_col, do: map[col] ++ [doc], else: [doc]
         Map.put map, col, new_col
       end
       Agent.get(__MODULE__, &Map.get(&1, col)) |> List.last
@@ -47,12 +47,13 @@ defmodule Griffin.Model.Adapters do
 
     defp find(col, args) do
       docs = Agent.get __MODULE__, &Map.get(&1, col)
-      docs || []
+      docs = docs || []
       |> Enum.filter(fn (doc) ->
         subset = Map.take doc, Map.keys(args)
         subset == args
       end)
-      |> List.first
+      |> List.flatten
+      List.first docs
     end
   end
 end

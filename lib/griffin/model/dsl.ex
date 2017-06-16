@@ -9,11 +9,11 @@ defmodule Griffin.Model.DSL do
 
   ## Example
 
-    iex> dsl = [:string, on_create: :required] 
+    iex> dsl = [:string, on_create: :required]
     iex> Griffin.Model.DSL.for_crud dsl, :create
     [:string, :required]
     iex> Griffin.Model.DSL.for_crud dsl, :read
-    [:string] 
+    [:string]
 
   """
   def for_crud_op(dsl, crud_op) do
@@ -27,13 +27,13 @@ defmodule Griffin.Model.DSL do
           true -> nil
         end
       end
-      new_rules = new_rules |> List.flatten |> List.delete(nil) 
+      new_rules = new_rules |> List.flatten |> List.delete(nil)
       {attr, [type | new_rules]}
     end
   end
 
   @doc """
-  Converts a Griffin fields DSL into a CRUD map of query/mutation GraphQL 
+  Converts a Griffin fields DSL into a CRUD map of query/mutation GraphQL
   schemas that can be composed through `graphqlize` and run
   through `GraphQL.execute`.
 
@@ -51,10 +51,10 @@ defmodule Griffin.Model.DSL do
 
   ## Example
 
-    iex> schema = Griffin.Model.[ |> to_graphql(me: [:string]] 
+    iex> schema = Griffin.Model.[ |> to_graphql(me: [:string]]
     iex> GraphQL.execute schema, "{ name }"
     {:ok, %{data: %{"name" => "Harry Potter"}}}
-  
+
   """
   def to_graphql_map(
     namespace: namespace,
@@ -76,10 +76,10 @@ defmodule Griffin.Model.DSL do
     }
     # List Query
     list_field = %{
-      type: %GraphQL.Type.ObjectType{
+      type: %GraphQL.Type.List{ofType: %GraphQL.Type.ObjectType{
         name: "#{String.capitalize to_string namespace}ListQueryType",
         fields: fields |> to_graphql(:list)
-      },
+      }},
       resolve: list,
       args: fields |> to_graphql(:list)
     }
@@ -126,7 +126,7 @@ defmodule Griffin.Model.DSL do
 
   # Converts a fields dsl into a map of GraphQL types
   defp to_graphql(dsl, crud_op) do
-    fields = for {attr, [type | rules]} <- for_crud_op dsl, crud_op do 
+    fields = for {attr, [type | rules]} <- for_crud_op dsl, crud_op do
       graphql_type = cond do
         Enum.member?(rules, :required) ->
           %GraphQL.Type.NonNull{ofType: %GraphQL.Type.String{}}

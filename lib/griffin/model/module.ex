@@ -14,11 +14,11 @@ defmodule Griffin.Model.Module do
       %{query: query, mutation: mutation} = Griffin.Model.DSL.to_graphql_map(
         namespace: model.namespace,
         fields: model.fields,
-        create: &Griffin.Model.Module.resolver/3,
-        read: &Griffin.Model.Module.resolver/3,
-        update: &Griffin.Model.Module.resolver/3,
-        delete: &Griffin.Model.Module.resolver/3,
-        list: &Griffin.Model.Module.resolver/3
+        create: resolver(model, :create),
+        read: resolver(model, :read),
+        update: resolver(model, :update),
+        delete: resolver(model, :delete),
+        list: resolver(model, :list)
       )
       {query, mutation}
     end
@@ -37,10 +37,9 @@ defmodule Griffin.Model.Module do
     end
   end
 
-  def resolver(_, _, _), do: %{}
-  # defp resolver(model, crud_op) do
-  #   fn (_, args, _) ->  end
-  # end
+  defp resolver(model, crud_op) do
+    fn (_, args, _) -> resolve(model, crud_op, args).res end
+  end
 
   @doc """
   Accepts a model module and passes a `ctx` map through its `resolve`
