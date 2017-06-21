@@ -44,7 +44,8 @@ defmodule Griffin.Mixfile do
       {:credo, "~> 0.8.0-rc6", only: [:dev, :test], runtime: false},
       {:mix_test_watch, "~> 0.3", only: :dev, runtime: false},
       {:graphql, "~> 0.3"},
-      {:plug_graphql, "~> 0.3.1"}
+      {:plug_graphql, "~> 0.3.1"},
+      {:inflectorex, "0.1.0"},
     ]
   end
 end

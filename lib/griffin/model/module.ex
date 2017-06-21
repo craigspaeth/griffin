@@ -6,13 +6,28 @@ defmodule Griffin.Model.Module do
   """
 
   @doc """
+  Gets the singular and plural namespace of a model module.
+  """
+  def namespaces(model) do
+    if is_tuple model.namespace do
+      model.namespace
+    else
+      plural = model.namespace
+      |> to_string
+      |> Inflectorex.pluralize
+      |> String.to_atom
+      {model.namespace,  Inflectorex.pluralize("secret")}
+    end
+  end
+
+  @doc """
   Converts a list of model modules into a single GraphQL schema that
   can be run through `GraphQL.execute`.
   """
   def graphqlize(models) do
     pairs = for model <- models do
       %{query: query, mutation: mutation} = Griffin.Model.DSL.to_graphql_map(
-        namespace: model.namespace,
+        namespaces: namespaces(model),
         fields: model.fields,
         create: resolver(model, :create),
         read: resolver(model, :read),

@@ -22,16 +22,23 @@ defmodule Griffin.Model.Adapters do
     updates the response.
     """
     def to_db_statement(%{errs: errs} = ctx, _) when length(errs) > 0, do: ctx
-    def to_db_statement(%{op: op} = ctx) when op == :create do
-      doc = insert ctx._model.namespace, ctx.args
-      %{ctx | res: doc}
-    end
-    def to_db_statement(%{op: op} = ctx) when op == :read do
-      doc = find ctx._model.namespace, ctx.args
-      %{ctx | res: doc}
+    def to_db_statement(%{op: op} = ctx) do
+      {_, col} = Griffin.Model.Module.namespaces ctx._model
+      res = case op do
+        :create -> create col, ctx.args
+        :read -> read col, ctx.args
+        :update -> update col, ctx.args
+        :delete -> delete col, ctx.args
+        :list -> list col, ctx.args
+      end
+      %{ctx | res: res}
     end
 
-    defp insert(col, doc) do
+    def empty do
+      Agent.update __MODULE__, fn _ -> %{} end
+    end
+
+    def create(col, doc) do
       Agent.update __MODULE__, fn map ->
         old_col = Map.get map, col
         doc = case {is_nil(old_col), is_nil(doc[:id])} do
@@ -45,7 +52,19 @@ defmodule Griffin.Model.Adapters do
       Agent.get(__MODULE__, &Map.get(&1, col)) |> List.last
     end
 
-    defp find(col, args) do
+    def read(col, args) do
+      List.first list col, args
+    end
+
+    def update(_, _) do
+      raise "Update not implemented"
+    end
+
+    def delete(_, _) do
+      raise "Update not implemented"
+    end
+
+    def list(col, args) do
       docs = Agent.get __MODULE__, &Map.get(&1, col)
       docs = docs || []
       |> Enum.filter(fn (doc) ->
@@ -53,7 +72,7 @@ defmodule Griffin.Model.Adapters do
         subset == args
       end)
       |> List.flatten
-      List.first docs
+      docs
     end
   end
 end

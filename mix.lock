@@ -4,6 +4,7 @@
   "credo": {:hex, :credo, "0.8.0-rc6", "19805638f696cc2e5f23dad7ea94558ff31b90711960bbd754e097e1624ba699", [:mix], [{:bunt, "~> 0.2.0", [hex: :bunt, repo: "hexpm", optional: false]}], "hexpm"},
   "fs": {:hex, :fs, "2.12.0", "ad631efacc9a5683c8eaa1b274e24fa64a1b8eb30747e9595b93bec7e492e25e", [:rebar3], [], "hexpm"},
   "graphql": {:hex, :graphql, "0.3.2", "0aa7a00948c456831f8fa1bb4ead3e4e15d145b8656902134d180d1369775dff", [:mix], [], "hexpm"},
+  "inflectorex": {:hex, :inflectorex, "0.1.0", "6e9e490feaafbe3541ca94cc2b8f0d9bc5248715e53661e47f45637ffeea6d49", [:mix], [], "hexpm"},
   "lodash": {:hex, :lodash, "0.0.3", "e73b152f28b498ef8bfa852d04d48211d0d098283a6377148ed6fd319b02c0d6", [:mix], [], "hexpm"},
   "mime": {:hex, :mime, "1.1.0", "01c1d6f4083d8aa5c7b8c246ade95139620ef8effb009edde934e0ec3b28090a", [:mix], [], "hexpm"},
   "mix_test_watch": {:hex, :mix_test_watch, "0.4.0", "7e44b681b0238999d4c39b5beed77b4ac45aef1c112a763aae414bdb5bc34523", [:mix], [{:fs, "~> 2.12", [hex: :fs, repo: "hexpm", optional: false]}], "hexpm"},

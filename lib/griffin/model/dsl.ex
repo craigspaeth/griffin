@@ -57,7 +57,7 @@ defmodule Griffin.Model.DSL do
 
   """
   def to_graphql_map(
-    namespace: namespace,
+    namespaces: namespaces,
     fields: fields,
     create: create,
     read: read,
@@ -65,10 +65,11 @@ defmodule Griffin.Model.DSL do
     delete: delete,
     list: list
   ) do
+    {singular, plural} = namespaces
     # Read Query
     read_field = %{
       type: %GraphQL.Type.ObjectType{
-        name: "#{String.capitalize to_string namespace}QueryType",
+        name: "#{String.capitalize to_string singular}QueryType",
         fields: fields |> to_graphql(:read)
       },
       resolve: read,
@@ -77,16 +78,17 @@ defmodule Griffin.Model.DSL do
     # List Query
     list_field = %{
       type: %GraphQL.Type.List{ofType: %GraphQL.Type.ObjectType{
-        name: "#{String.capitalize to_string namespace}ListQueryType",
+        name: "#{String.capitalize to_string plural}ListQueryType",
         fields: fields |> to_graphql(:list)
       }},
       resolve: list,
+      # resolve: fn(_, args, _) -> [%{name: "Harry"}] end,
       args: fields |> to_graphql(:list)
     }
     # Create Mutation
     create_field = %{
       type: %GraphQL.Type.ObjectType{
-        name: "Create#{String.capitalize to_string namespace}MutationType",
+        name: "Create#{String.capitalize to_string singular}MutationType",
         fields: fields |> to_graphql(:create)
       },
       resolve: create,
@@ -95,7 +97,7 @@ defmodule Griffin.Model.DSL do
     # Delete Mutation
     delete_field = %{
       type: %GraphQL.Type.ObjectType{
-        name: "Delete#{String.capitalize to_string namespace}MutationType",
+        name: "Delete#{String.capitalize to_string singular}MutationType",
         fields: fields |> to_graphql(:delete)
       },
       resolve: delete,
@@ -104,7 +106,7 @@ defmodule Griffin.Model.DSL do
     # Update Mutation
     update_field = %{
       type: %GraphQL.Type.ObjectType{
-        name: "Update#{String.capitalize to_string namespace}MutationType",
+        name: "Update#{String.capitalize to_string singular}MutationType",
         fields: fields |> to_graphql(:update)
       },
       resolve: update,
@@ -113,13 +115,13 @@ defmodule Griffin.Model.DSL do
     # Compose CRUDL schemas into a map of query/mutation GraphQL schemas
     %{
       query: %{
-        String.to_atom "#{namespace}" => read_field,
-        String.to_atom "#{namespace}_list" => list_field
+        String.to_atom "#{singular}" => read_field,
+        String.to_atom "#{plural}" => list_field
       },
       mutation: %{
-        String.to_atom "create_#{namespace}" => create_field,
-        String.to_atom "update_#{namespace}" => update_field,
-        String.to_atom "delete_#{namespace}" => delete_field
+        String.to_atom "create_#{singular}" => create_field,
+        String.to_atom "update_#{singular}" => update_field,
+        String.to_atom "delete_#{singular}" => delete_field
       }
     }
   end

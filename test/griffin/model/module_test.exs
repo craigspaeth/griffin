@@ -1,7 +1,13 @@
 defmodule Griffin.Model.ModuleTest do
   @moduledoc false
-  
+
   use ExUnit.Case
+
+  setup do
+    Griffin.Model.Adapters.Memory.empty
+    Griffin.Model.Adapters.Memory.init
+    :ok
+  end
 
   defmodule WizardModel do
     @moduledoc """
@@ -10,7 +16,7 @@ defmodule Griffin.Model.ModuleTest do
     import Griffin.Model
     import Griffin.Model.Adapters.Memory
 
-    def namespace, do: :wizard
+    def namespace, do: {:wizard, :wizards}
 
     def fields, do: [
       name: [:string, :required],
@@ -20,7 +26,7 @@ defmodule Griffin.Model.ModuleTest do
           lat: [:int, :required],
           lng: [:int, :required]
         ]]
-      ]] 
+      ]]
     ]
 
     def resolve(ctx) do
@@ -31,7 +37,6 @@ defmodule Griffin.Model.ModuleTest do
   end
 
   test "converts a bunch of models into a grapqhl schema" do
-    Griffin.Model.Adapters.Memory.init
     schema = Griffin.Model.Module.graphqlize [WizardModel]
     {status, res} = GraphQL.execute schema, "mutation Wizard {
       create_wizard(name: \"Harry Potter\") { name }
@@ -41,8 +46,18 @@ defmodule Griffin.Model.ModuleTest do
     assert res.data["create_wizard"]["name"] == "Harry Potter"
   end
 
+  test "converts models into a list query" do
+    schema = Griffin.Model.Module.graphqlize [WizardModel]
+    Griffin.Model.Adapters.Memory.create :wizards, %{name: "Harry Potter"}
+    {status, res} = GraphQL.execute schema, "query Wizard {
+      wizards(name: \"Harry Potter\") { name }
+    }
+    "
+    assert status == :ok
+    assert List.first(res.data["wizards"])["name"] == "Harry Potter"
+  end
+
   test "run a model's resolver" do
-    Griffin.Model.Adapters.Memory.init
     ctx = Griffin.Model.Module.resolve WizardModel, :create, %{
       name: "Harry Potter",
       school: %{
@@ -67,7 +82,6 @@ defmodule Griffin.Model.ModuleTest do
   end
 
   test "surfaces validation errors through a model's resolver" do
-    Griffin.Model.Adapters.Memory.init
     ctx = Griffin.Model.Module.resolve WizardModel, :create, %{
       name: "Harry"
     }
