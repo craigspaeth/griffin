@@ -20,41 +20,7 @@ defmodule Griffin.Model.Module do
     end
   end
 
-  @doc """
-  Converts a list of model modules into a single GraphQL schema that
-  can be run through `GraphQL.execute`.
-  """
-  def graphqlize(models) do
-    pairs = for model <- models do
-      %{query: query, mutation: mutation} = Griffin.Model.DSL.to_graphql_map(
-        namespaces: namespaces(model),
-        fields: model.fields,
-        create: resolver(model, :create),
-        read: resolver(model, :read),
-        update: resolver(model, :update),
-        delete: resolver(model, :delete),
-        list: resolver(model, :list)
-      )
-      {query, mutation}
-    end
-    base = %{query: %{fields: %{}}, mutation: %{fields: %{}}}
-    Enum.reduce pairs, base, fn ({query, mutation}, acc) ->
-      %{
-        query: %GraphQL.Type.ObjectType{
-          name: "RootQueryType",
-          fields: Map.merge(acc.query.fields, query)
-        },
-        mutation: %GraphQL.Type.ObjectType{
-          name: "RootMutationType",
-          fields: Map.merge(acc.mutation.fields, mutation)
-        }
-      }
-    end
-  end
-
-  defp resolver(model, crud_op) do
-    fn (_, args, _) -> resolve(model, crud_op, args).res end
-  end
+  defdelegate graphqlize(models), to: Griffin.Model.GraphQL
 
   @doc """
   Accepts a model module and passes a `ctx` map through its `resolve`

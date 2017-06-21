@@ -62,15 +62,6 @@ defmodule Controller do
   @moduledoc false
 end
 
-defmodule Schema do
-  @moduledoc false
-
-  def schema do
-    %{query: query, mutation: mut} = Griffin.Model.Module.graphqlize [Model]
-    %GraphQL.Schema{query: query, mutation: mut}
-  end
-end
-
 defmodule MyRouter do
   @moduledoc false
   use Plug.Router
@@ -88,8 +79,11 @@ defmodule MyRouter do
   end
 
   match "/api" do
-    opts = GraphQL.Plug.init schema: {Schema, :schema}
-    GraphQL.Plug.call conn, opts
+    defmodule Schema do
+      @moduledoc false
+      def schema, do: Griffin.Model.GraphQL.graphqlify [Model]
+    end
+    Griffin.Model.GraphQL.plugify conn, Schema
   end
 
   match _ do

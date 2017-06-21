@@ -47,7 +47,7 @@ defmodule Griffin.Mixfile do
       {:plug_graphql, "~> 0.3.1"},
       {:inflex, "~> 1.8.1" },
       {:httpotion, "~> 3.0.2"},
-      {:poison, "~> 3.1"}
+      {:poison, "~> 2.2"}
     ]
   end
 end
