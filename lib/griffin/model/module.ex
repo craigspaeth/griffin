@@ -14,9 +14,9 @@ defmodule Griffin.Model.Module do
     else
       plural = model.namespace
       |> to_string
-      |> Inflectorex.pluralize
+      |> Inflex.pluralize
       |> String.to_atom
-      {model.namespace,  Inflectorex.pluralize("secret")}
+      {model.namespace,  Inflex.pluralize("secret")}
     end
   end
 

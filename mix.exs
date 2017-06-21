@@ -33,7 +33,7 @@ defmodule Griffin.Mixfile do
   def application do
     [
       mod: {MyApp, []},
-      applications: [:logger, :cowboy, :plug, :graphql]
+      applications: [:logger, :cowboy, :plug, :graphql, :httpotion]
     ]
   end
 
@@ -45,7 +45,9 @@ defmodule Griffin.Mixfile do
       {:mix_test_watch, "~> 0.3", only: :dev, runtime: false},
       {:graphql, "~> 0.3"},
       {:plug_graphql, "~> 0.3.1"},
-      {:inflectorex, "0.1.0"},
+      {:inflex, "~> 1.8.1" },
+      {:httpotion, "~> 3.0.2"},
+      {:poison, "~> 3.1"}
     ]
   end
 end

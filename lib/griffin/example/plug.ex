@@ -4,7 +4,7 @@ defmodule Model do
   import Griffin.Model
   import Griffin.Model.Adapters.Memory
 
-  def namespace, do: :wizard
+  def namespace, do: {:wizard, :wizards}
 
   def fields, do: [
     name: [:string, :required]
@@ -22,15 +22,15 @@ defmodule ViewModel do
 
   import Griffin.ViewModel.Server
 
+  @api "http://localhost:4001"
+
   def init, do: %{
     wizards: []
   }
 
   def load_index(model) do
-    set model, wizards: [
-      %{name: "Harry Potter", meta: %{patronus: "Deer"}},
-      %{name: "Snape", meta: %{patronus: "Doe"}}
-    ]
+    %{wizards: wizards} = gql! @api, "{ wizards { name } }"
+    set model, wizards: wizards
   end
 end
 
@@ -45,9 +45,6 @@ defmodule View do
       item: %{
         font_size: "16px",
         font_family: "Helvetica"
-      },
-      patronus: %{
-        color: "blue"
       }
     }
   end
@@ -56,8 +53,7 @@ defmodule View do
     [:ul@ul,
       for wizard <- model.wizards do
         [:li@item,
-          [:h1, "Welcome #{wizard.name}"],
-          [:p@patronus, "Patronus: #{wizard.meta.patronus}"]]
+          [:h1, "Welcome #{wizard.name}"]]
       end]
   end
 end
