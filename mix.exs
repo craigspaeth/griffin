@@ -45,6 +45,7 @@ defmodule Griffin.Mixfile do
       {:mix_test_watch, "~> 0.3", only: :dev, runtime: false},
       {:graphql, "~> 0.3"},
       {:plug_graphql, "~> 0.3.1"},
+      {:absinthe, "~> 1.3.1"},
       {:inflex, "~> 1.8.1" },
       {:httpotion, "~> 3.0.2"},
       {:poison, "~> 2.2"}

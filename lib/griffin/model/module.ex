@@ -20,7 +20,7 @@ defmodule Griffin.Model.Module do
     end
   end
 
-  defdelegate graphqlize(models), to: Griffin.Model.GraphQL
+  defdelegate graphqlify(models), to: Griffin.Model.GraphQL
 
   @doc """
   Accepts a model module and passes a `ctx` map through its `resolve`

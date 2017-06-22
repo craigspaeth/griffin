@@ -37,7 +37,7 @@ defmodule Griffin.Model.ModuleTest do
   end
 
   test "converts a bunch of models into a grapqhl schema" do
-    schema = Griffin.Model.Module.graphqlize [WizardModel]
+    schema = Griffin.Model.Module.graphqlify [WizardModel]
     {status, res} = GraphQL.execute schema, "mutation Wizard {
       create_wizard(name: \"Harry Potter\") { name }
     }
@@ -47,7 +47,7 @@ defmodule Griffin.Model.ModuleTest do
   end
 
   test "converts models into a list query" do
-    schema = Griffin.Model.Module.graphqlize [WizardModel]
+    schema = Griffin.Model.Module.graphqlify [WizardModel]
     Griffin.Model.Adapters.Memory.create :wizards, %{name: "Harry Potter"}
     {status, res} = GraphQL.execute schema, "query Wizard {
       wizards(name: \"Harry Potter\") { name }

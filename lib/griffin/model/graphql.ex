@@ -62,7 +62,6 @@ defmodule Griffin.Model.GraphQL do
         fields: fields |> to_graphql(:list)
       }},
       resolve: list,
-      # resolve: fn(_, args, _) -> [%{name: "Harry"}] end,
       args: fields |> to_graphql(:list)
     }
     # Create Mutation
