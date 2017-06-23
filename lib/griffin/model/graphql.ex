@@ -31,7 +31,7 @@ defmodule Griffin.Model.GraphQL do
 
   ## Example
 
-    iex> schema = Griffin.Model.[ |> to_graphql(me: [:string]]
+    iex> schema = Griffin.Model.[ |> fields_to_graphql(me: [:string]]
     iex> GraphQL.execute schema, "{ name }"
     {:ok, %{data: %{"name" => "Harry Potter"}}}
 
@@ -50,46 +50,46 @@ defmodule Griffin.Model.GraphQL do
     read_field = %{
       type: %GraphQL.Type.ObjectType{
         name: "#{String.capitalize to_string singular}QueryType",
-        fields: fields |> to_graphql(:read)
+        fields: fields |> fields_to_graphql(:read)
       },
       resolve: read,
-      args: fields |> to_graphql(:read)
+      args: fields |> fields_to_graphql(:read)
     }
     # List Query
     list_field = %{
       type: %GraphQL.Type.List{ofType: %GraphQL.Type.ObjectType{
         name: "#{String.capitalize to_string plural}ListQueryType",
-        fields: fields |> to_graphql(:list)
+        fields: fields |> fields_to_graphql(:list)
       }},
       resolve: list,
-      args: fields |> to_graphql(:list)
+      args: fields |> fields_to_graphql(:list)
     }
     # Create Mutation
     create_field = %{
       type: %GraphQL.Type.ObjectType{
         name: "Create#{String.capitalize to_string singular}MutationType",
-        fields: fields |> to_graphql(:create)
+        fields: fields |> fields_to_graphql(:create)
       },
       resolve: create,
-      args: fields |> to_graphql(:create)
+      args: fields |> fields_to_graphql(:create)
     }
     # Delete Mutation
     delete_field = %{
       type: %GraphQL.Type.ObjectType{
         name: "Delete#{String.capitalize to_string singular}MutationType",
-        fields: fields |> to_graphql(:delete)
+        fields: fields |> fields_to_graphql(:delete)
       },
       resolve: delete,
-      args: fields |> to_graphql(:delete)
+      args: fields |> fields_to_graphql(:delete)
     }
     # Update Mutation
     update_field = %{
       type: %GraphQL.Type.ObjectType{
         name: "Update#{String.capitalize to_string singular}MutationType",
-        fields: fields |> to_graphql(:update)
+        fields: fields |> fields_to_graphql(:update)
       },
       resolve: update,
-      args: fields |> to_graphql(:update)
+      args: fields |> fields_to_graphql(:update)
     }
     # Compose CRUDL schemas into a map of query/mutation GraphQL schemas
     %{
@@ -106,7 +106,7 @@ defmodule Griffin.Model.GraphQL do
   end
 
   # Converts a fields dsl into a map of GraphQL types
-  defp to_graphql(dsl, crud_op) do
+  defp fields_to_graphql(dsl, crud_op) do
     dsl = Griffin.Model.DSL.for_crud_op dsl, crud_op
     fields = for {attr, [type | rules]} <- dsl do
       graphql_type = cond do
@@ -130,12 +130,19 @@ defmodule Griffin.Model.GraphQL do
   end
 
   @doc """
-  Converts a list of model modules into a single GraphQL schema that
-  can be run through `GraphQL.execute`.
+  Runs a GraphQL query string against a given schema module
   """
-  def graphqlify(models) do
+  def run(query, schema) do
+    GraphQL.execute schema, query
+  end
+
+  @doc """
+  Converts a list of model modules into a single GraphQL schema module that
+  can be run through `run`.
+  """
+  def schemaify(models) do
     pairs = for model <- models do
-      %{query: query, mutation: mutation} = Griffin.Model.DSL.to_graphql_map(
+      %{query: query, mutation: mutation} = to_graphql_map(
         namespaces: Griffin.Model.Module.namespaces(model),
         fields: model.fields,
         create: resolver(model, :create),

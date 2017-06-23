@@ -31,6 +31,4 @@ defmodule Griffin.Model.DSL do
       {attr, [type | new_rules]}
     end
   end
-
-  defdelegate to_graphql_map(opts), to: Griffin.Model.GraphQL
 end
