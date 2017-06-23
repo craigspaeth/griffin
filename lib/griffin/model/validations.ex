@@ -2,14 +2,14 @@ defmodule Griffin.Model.Validations do
   @moduledoc """
   Library of validation functions and a `valid?/2` function that will
   check a map of GraphQL/JSON-like data passes a series of validations.
-  
+
   Used in the models to enforce a database dsl that works for the database
   and exposing to GraphQL.
   """
 
   @doc """
   Runs `valid?/2` against a certain type of CRUD operation
-  
+
   ## Examples
     iex> dsl = [name: [:string, on_create: [:required]]]
     iex> Griffin.Validations.valid? %{ name: nil }, dsl, :create
@@ -31,7 +31,7 @@ defmodule Griffin.Model.Validations do
   end
 
   @doc """
-  Pulls the error tuples out of &results/2 
+  Pulls the error tuples out of &results/2
   """
   def errors(data, dsl) do
     Enum.filter results(data, dsl), fn {status, _} -> status == :error end
@@ -39,8 +39,8 @@ defmodule Griffin.Model.Validations do
 
   @doc """
   Validates a map of json-like data against a dsl returning results in a list of
-  tuples containing ok/errors e.g. 
-  
+  tuples containing ok/errors e.g.
+
   ```
   [{:ok, :name},{:error, :password, "fails min: 4"}].
   ```
@@ -62,7 +62,7 @@ defmodule Griffin.Model.Validations do
   def results(data, dsl) do
     res = for {attr, validation} <- dsl do
 
-      # Validate the first atom in the DSL is a valid GraphQL type
+      # Validate the first atom in the DSL is a valid Elixir/GraphQLey type
       type = Enum.at validation, 0
       types = [
         :int,
@@ -94,7 +94,7 @@ defmodule Griffin.Model.Validations do
             is_atom rule ->
               rule_name = rule
               apply Griffin.Model.Validations, rule_name, [type, data[attr]]
-            
+
             # Zero arity function like
             # [name: [:string, &is_caps/0]]
             is_function rule ->
@@ -116,13 +116,13 @@ defmodule Griffin.Model.Validations do
                 rule_name,
                 [type, data[attr]] ++ rule_args
               )
-            
+
             # Unsupported style
           end
           if is_valid do
             {:ok, attr}
           else
-            msg = 
+            msg =
               "#{attr} with value #{inspect data[attr]} " <>
               "is invalid according to the rule #{inspect rule}"
             {:error, msg}
@@ -159,11 +159,11 @@ defmodule Griffin.Model.Validations do
   end
 
   def max(type, val, len) when type == :int do
-    val <= len     
+    val <= len
   end
 
   def max(type, val, len) when type == :list do
-    Enum.count(val) <= len     
+    Enum.count(val) <= len
   end
 
   def of(type, val, dsl) when type == :map do
@@ -174,7 +174,7 @@ defmodule Griffin.Model.Validations do
     valids = for item <- val do
       valid? %{item: item}, [item: dsl]
     end
-    valids |> List.flatten |> Enum.all? 
+    valids |> List.flatten |> Enum.all?
   end
 
   def of(type, val, dsls) when type == :either do

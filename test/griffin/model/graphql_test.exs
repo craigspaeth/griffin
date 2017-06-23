@@ -132,13 +132,18 @@ defmodule Griffin.Model.GraphQLTest do
   #   assert res.data["create_wizard"]["name"] == "Harry Potter"
   # end
 
+  test "converts models into a read query" do
+    Griffin.Model.Adapters.Memory.create :wizards, %{name: "Harry Potter"}
+    schema = Griffin.Model.GraphQL.schemaify [WizardModel]
+    {status, res} = "{ wizard { name } }" |> Griffin.Model.GraphQL.run(schema)
+    assert status == :ok
+    assert res.data["wizard"]["name"] == "Harry Potter"
+  end
+
   test "converts models into a list query" do
     Griffin.Model.Adapters.Memory.create :wizards, %{name: "Harry Potter"}
     schema = Griffin.Model.GraphQL.schemaify [WizardModel]
-    {status, res} = "query Wizard {
-      wizards(name: \"Harry Potter\") { name }
-    }
-    " |> Griffin.Model.GraphQL.run schema
+    {status, res} = "{ wizards { name } }" |> Griffin.Model.GraphQL.run(schema)
     assert status == :ok
     assert List.first(res.data["wizards"])["name"] == "Harry Potter"
   end

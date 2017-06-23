@@ -48,7 +48,8 @@ defmodule Griffin.Mixfile do
       {:absinthe, "~> 1.3.1"},
       {:inflex, "~> 1.8.1" },
       {:httpotion, "~> 3.0.2"},
-      {:poison, "~> 2.2"}
+      {:poison, "~> 2.2"},
+      {:uuid, "~> 1.1"}
     ]
   end
 end
