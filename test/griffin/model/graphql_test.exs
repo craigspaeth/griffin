@@ -122,20 +122,30 @@ defmodule Griffin.Model.GraphQLTest do
   #   assert status == :error
   # end
 
-  # test "converts a bunch of models into a grapqhl schema" do
-  #   schema = Griffin.Model.GraphQL.graphqlify [WizardModel]
-  #   {status, res} = GraphQL.execute schema, "mutation Wizard {
-  #     create_wizard(name: \"Harry Potter\") { name }
-  #   }
-  #   "
-  #   assert status == :ok
-  #   assert res.data["create_wizard"]["name"] == "Harry Potter"
-  # end
+  test "converts a bunch of models into a grapqhl schema" do
+    schema = Griffin.Model.GraphQL.schemaify [WizardModel]
+    {status, res} = "mutation {
+      create_wizard(name: \"Harry Potter\") { name }
+    }
+    " |> Griffin.Model.GraphQL.run(schema)
+    assert status == :ok
+    assert res.data["create_wizard"]["name"] == "Harry Potter"
+  end
 
   test "converts models into a read query" do
     Griffin.Model.Adapters.Memory.create :wizards, %{name: "Harry Potter"}
     schema = Griffin.Model.GraphQL.schemaify [WizardModel]
     {status, res} = "{ wizard { name } }" |> Griffin.Model.GraphQL.run(schema)
+    assert status == :ok
+    assert res.data["wizard"]["name"] == "Harry Potter"
+  end
+
+  test "converts models into a read query with args" do
+    Griffin.Model.Adapters.Memory.create :wizards, %{name: "Harry Potter"}
+    schema = Griffin.Model.GraphQL.schemaify [WizardModel]
+    {status, res} = "{
+      wizard(name: \"Harry Potter\")  { name }
+    }" |> Griffin.Model.GraphQL.run(schema)
     assert status == :ok
     assert res.data["wizard"]["name"] == "Harry Potter"
   end
