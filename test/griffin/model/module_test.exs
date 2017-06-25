@@ -67,4 +67,13 @@ defmodule Griffin.Model.ModuleTest do
     [{_, msg}] = ctx.errs
     assert String.match? msg, ~r/school with value nil is invalid/
   end
+
+  test "automatically pluralizes a namespace" do
+    defmodule FooModel do
+      @moduledoc false
+      def namespace, do: :dog
+    end
+    {_, plural} = Griffin.Model.Module.namespaces FooModel
+    assert plural == "dogs"
+  end
 end

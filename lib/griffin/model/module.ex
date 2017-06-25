@@ -16,7 +16,7 @@ defmodule Griffin.Model.Module do
       |> to_string
       |> Inflex.pluralize
       |> String.to_atom
-      {model.namespace,  Inflex.pluralize("secret")}
+      {model.namespace,  Inflex.pluralize(model.namespace)}
     end
   end
 

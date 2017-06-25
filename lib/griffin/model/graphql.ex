@@ -8,8 +8,8 @@ defmodule Griffin.Model.GraphQL do
   with GraphiQL.
   """
   def plugify(conn, schema) do
-    opts = GraphQL.Plug.init schema: {schema, :schema}
-    GraphQL.Plug.call conn, opts
+    opts = Absinthe.Plug.init schema: schema
+    Absinthe.Plug.call conn, opts
   end
 
   @doc """
@@ -26,7 +26,6 @@ defmodule Griffin.Model.GraphQL do
   def schemaify(models) do
     id = UUID.uuid4(:hex)
     model = List.first models
-    {singular, plural} = Griffin.Model.Module.namespaces model
     code = """
       defmodule Griffin.Model.Runtime.Types#{id} do
         use Absinthe.Schema.Notation
@@ -37,21 +36,12 @@ defmodule Griffin.Model.GraphQL do
         import_types Griffin.Model.Runtime.Types#{id}
         query do
           #{model_to_field model, :read}
-          field :#{plural}, list_of(:#{singular}) do
-            resolve fn (args, _) ->
-              model = #{inspect model}
-              {:ok, Griffin.Model.Module.resolve(model, :list, args).res}
-            end
-          end
+          #{model_to_field model, :list}
         end
         mutation do
-          field :create_#{singular}, :#{singular} do
-            arg :name, :string
-            resolve fn (args, _) ->
-              model = #{inspect model}
-              {:ok, Griffin.Model.Module.resolve(model, :create, args).res}
-            end
-          end
+          #{model_to_field model, :create}
+          #{model_to_field model, :update}
+          #{model_to_field model, :delete}
         end
       end
     """
@@ -60,9 +50,21 @@ defmodule Griffin.Model.GraphQL do
   end
 
   defp model_to_field(model, crud_op) do
-    {singular, _} = Griffin.Model.Module.namespaces model
+    {singular, plural} = Griffin.Model.Module.namespaces model
+    field_name = case crud_op do
+      :create -> "create_#{singular}"
+      :read -> singular
+      :update -> "update_#{singular}"
+      :delete -> "delete_#{singular}"
+      :list -> plural
+    end
+    type_name = if crud_op == :list do
+      "list_of(:#{singular})"
+    else
+      ":#{singular}"
+    end
     """
-    field :#{singular}, :#{singular} do
+    field :#{field_name}, #{type_name} do
       #{model_to_args model, crud_op}
       resolve fn (args, _) ->
         model = #{inspect model}
@@ -75,7 +77,7 @@ defmodule Griffin.Model.GraphQL do
   defp model_to_args(model, crud_op) do
     {name, _} = Griffin.Model.Module.namespaces model
     dsl = Griffin.Model.DSL.for_crud_op model.fields, crud_op
-    fields = for {attr, [type | rules]} <- dsl do
+    fields = for {attr, [type | _]} <- dsl do
       type = case type do
         :map -> "#{name}_input_#{attr}"
         :int -> :integer
@@ -129,12 +131,12 @@ defmodule Griffin.Model.GraphQL do
       end
       "field :#{attr}, :#{type}"
     end
-    fields = Enum.join fields, "\n  "    
+    Enum.join fields, "\n  "    
   end
 
   defp extract_map_objs(name, dsl, is_input) do
     maps_dsl = Enum.filter dsl, fn ({_, [type | _]}) -> type == :map end
-    map_objs = for {attr, [_ | rules]} <- maps_dsl do
+    for {attr, [_ | rules]} <- maps_dsl do
       {_, dsl} = rules
       |> Enum.filter(fn ({rule_name, _}) -> rule_name == :of end)
       |> List.first

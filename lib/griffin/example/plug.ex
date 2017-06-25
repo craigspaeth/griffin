@@ -68,6 +68,13 @@ defmodule MyRouter do
 
   plug :match
   plug :dispatch
+  plug Plug.Parsers,
+    parsers: [:urlencoded, :multipart, :json, Absinthe.Plug.Parser],
+    pass: ["*/*"],
+    json_decoder: Poison
+
+  forward "/api", to: Absinthe.Plug,
+    schema: Griffin.Model.GraphQL.schemaify([Model])
 
   get "/" do
     model = ViewModel.init
@@ -76,14 +83,6 @@ defmodule MyRouter do
     conn
     |> put_resp_content_type("text/html")
     |> send_resp(200, html)
-  end
-
-  match "/api" do
-    defmodule Schema do
-      @moduledoc false
-      def schema, do: Griffin.Model.GraphQL.graphqlify [Model]
-    end
-    Griffin.Model.GraphQL.plugify conn, Schema
   end
 
   match _ do

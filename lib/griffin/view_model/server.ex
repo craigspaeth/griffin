@@ -24,7 +24,7 @@ defmodule Griffin.ViewModel.Server do
       body: query,
       headers: ["Content-Type": "application/graphql"]
     ]
-    Poison.parse!(response.body, keys: :atoms!).data
+    Poison.decode!(response.body, keys: :atoms!).data
   end
 
   # Deep merge map utility copied from
