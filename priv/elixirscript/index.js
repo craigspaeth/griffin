@@ -1,0 +1,1 @@
+Elixir.start(Elixir.App, []);

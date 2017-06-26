@@ -26,7 +26,17 @@ defmodule Griffin.Mixfile do
       start_permanent: Mix.env == :prod,
       deps: deps(),
       description: description(),
-      package: package()
+      package: package(),
+      elixir_script: [
+        input: "lib/elixirscript",
+        output: "priv/elixirscript/app.js",
+        format: :umd,
+        js_modules: [
+          {React, "react"},
+          {ReactDOM, "react-dom"}
+        ]
+     ],
+     compilers: [:elixir_script] ++ Mix.compilers
     ]
   end
 
@@ -43,6 +53,7 @@ defmodule Griffin.Mixfile do
       {:absinthe_plug, "~> 1.3.1"},
       {:cowboy, "~> 1.0.0"},
       {:credo, "~> 0.8.0-rc6", only: [:dev, :test], runtime: false},
+      {:elixir_script, "~> 0.26"},
       {:httpotion, "~> 3.0.2"},
       {:inflex, "~> 1.8.1" },
       {:mix_test_watch, "~> 0.3", only: :dev, runtime: false},
