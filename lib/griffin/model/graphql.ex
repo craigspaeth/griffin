@@ -24,7 +24,7 @@ defmodule Griffin.Model.GraphQL do
   can be sent to `Absinthe.run`.
   """
   def schemaify(models) do
-    id = UUID.uuid4(:hex)
+    id = UUID.uuid4 :hex
     model = List.first models
     code = """
       defmodule Griffin.Model.Runtime.Types#{id} do

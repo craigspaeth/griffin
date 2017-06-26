@@ -33,20 +33,20 @@ defmodule Griffin.Mixfile do
   def application do
     [
       mod: {MyApp, []},
-      applications: [:logger, :cowboy, :plug, :absinthe_plug, :httpotion]
+      applications: [:absinthe_plug, :logger, :cowboy, :plug, :httpotion]
     ]
   end
 
   def deps do
     [
-      {:cowboy, "~> 1.0.0"},
-      {:plug, "~> 1.0"},
-      {:credo, "~> 0.8.0-rc6", only: [:dev, :test], runtime: false},
-      {:mix_test_watch, "~> 0.3", only: :dev, runtime: false},
       {:absinthe, "~> 1.3.1"},
-      {:absinthe_plug, "~> 1.3.0"},
-      {:inflex, "~> 1.8.1" },
+      {:absinthe_plug, "~> 1.3.1"},
+      {:cowboy, "~> 1.0.0"},
+      {:credo, "~> 0.8.0-rc6", only: [:dev, :test], runtime: false},
       {:httpotion, "~> 3.0.2"},
+      {:inflex, "~> 1.8.1" },
+      {:mix_test_watch, "~> 0.3", only: :dev, runtime: false},
+      {:plug, "~> 1.0"},
       {:poison, "~> 2.2"},
       {:uuid, "~> 1.1"}
     ]

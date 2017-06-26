@@ -22,7 +22,7 @@ defmodule ViewModel do
 
   import Griffin.ViewModel.Server
 
-  @api "http://localhost:4001"
+  @api "http://localhost:4001/api"
 
   def init, do: %{
     wizards: []
@@ -51,9 +51,13 @@ defmodule View do
 
   def render(model) do
     [:ul@ul,
-      for wizard <- model.wizards do
-        [:li@item,
-          [:h1, "Welcome #{wizard.name}"]]
+      if length(model.wizards) > 0 do
+        for wizard <- model.wizards do
+          [:li@item,
+            [:h1, "Welcome #{wizard.name}"]]
+        end
+      else
+        [:h1, "No wizards"]
       end]
   end
 end
@@ -66,15 +70,24 @@ defmodule MyRouter do
   @moduledoc false
   use Plug.Router
 
+  @schema Griffin.Model.GraphQL.schemaify [Model]
+
   plug :match
   plug :dispatch
+
   plug Plug.Parsers,
     parsers: [:urlencoded, :multipart, :json, Absinthe.Plug.Parser],
     pass: ["*/*"],
     json_decoder: Poison
 
-  forward "/api", to: Absinthe.Plug,
-    schema: Griffin.Model.GraphQL.schemaify([Model])
+  forward "/api",
+    to: Absinthe.Plug.GraphiQL,
+    schema: @schema,
+    interface: :simple
+
+  forward "/api",
+    to: Absinthe.Plug,
+    schema: @schema
 
   get "/" do
     model = ViewModel.init
@@ -86,7 +99,7 @@ defmodule MyRouter do
   end
 
   match _ do
-    send_resp conn, 404, "oops"
+    send_resp conn, 404, "Page not found"
   end
 end
 
