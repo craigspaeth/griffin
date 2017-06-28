@@ -41,7 +41,7 @@ defmodule Griffin.View.ServerTest do
       }
     end
 
-    def render(model) do
+    def render(_) do
       [:div, [:inner]]
     end
   end

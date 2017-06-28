@@ -4,8 +4,8 @@ defmodule Griffin.Model.ModuleTest do
   use ExUnit.Case
 
   setup do
-    Griffin.Model.Adapters.Memory.empty
     Griffin.Model.Adapters.Memory.init
+    Griffin.Model.Adapters.Memory.empty
     :ok
   end
 

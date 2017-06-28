@@ -6,8 +6,8 @@ defmodule Griffin.Model.GraphQLTest do
   def noop, do: nil
 
   setup do
-    Griffin.Model.Adapters.Memory.empty
     Griffin.Model.Adapters.Memory.init
+    Griffin.Model.Adapters.Memory.empty
     :ok
   end
 
