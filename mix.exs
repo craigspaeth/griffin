@@ -21,28 +21,28 @@ defmodule Griffin.Mixfile do
     [
       app: :griffin,
       version: "0.1.0",
-      elixir: "~> 1.4",
+      elixir: "~> 1.5",
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env == :prod,
       deps: deps(),
       description: description(),
       package: package(),
-      # elixir_script: [
-      #   input: "lib/elixirscript",
-      #   output: "priv/elixirscript/app.js",
-      #   format: :umd,
-      #   js_modules: [
-      #     {React, "react"},
-      #     {ReactDOM, "react-dom"}
-      #   ]
-      # ],
-      # compilers: [:elixir_script] ++ Mix.compilers
+      elixir_script: [
+        input: ESApp,
+        output: "priv/elixirscript/app.js",
+        format: :umd,
+        js_modules: [
+          {React, "react"},
+          {ReactDOM, "react-dom"}
+        ]
+      ],
+      compilers: Mix.compilers ++ [:elixir_script]
     ]
   end
 
   def application do
     [
-      # mod: {MyApp, []},
+      mod: {MyApp, []},
       applications: [:absinthe_plug, :logger, :cowboy, :plug, :httpotion]
     ]
   end

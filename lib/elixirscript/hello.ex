@@ -1,5 +1,4 @@
-
-defmodule App do
+defmodule ESApp do
   @moduledoc false
 
   def start(_, _) do
