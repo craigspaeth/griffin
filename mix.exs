@@ -26,17 +26,7 @@ defmodule Griffin.Mixfile do
       start_permanent: Mix.env == :prod,
       deps: deps(),
       description: description(),
-      package: package(),
-      elixir_script: [
-        input: ESApp,
-        output: "priv/elixirscript/app.js",
-        format: :umd,
-        js_modules: [
-          {React, "react"},
-          {ReactDOM, "react-dom"}
-        ]
-      ],
-      compilers: Mix.compilers ++ [:elixir_script]
+      package: package()
     ]
   end
 

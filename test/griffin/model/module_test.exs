@@ -74,6 +74,6 @@ defmodule Griffin.Model.ModuleTest do
       def namespace, do: :dog
     end
     {_, plural} = Griffin.Model.Module.namespaces FooModel
-    assert plural == "dogs"
+    assert plural == :dogs
   end
 end

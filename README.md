@@ -4,6 +4,8 @@
 
 Test with `mix test.watch` and run with `mix run --no-halt`
 
+Clean out dependencies with `mix deps.clean` and compile elixirscript with `mix js`
+
 ## Notes
 
 An MVC framework for the next generation that combines the latest ideas and tools from JS world (React + GraphQL) while trying to keep it somewhat familiar to Rails/Pheonix world (nomenclature, omakase, etc).
