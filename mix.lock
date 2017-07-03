@@ -4,7 +4,7 @@
   "cowboy": {:hex, :cowboy, "1.0.4", "a324a8df9f2316c833a470d918aaf73ae894278b8aa6226ce7a9bf699388f878", [:make, :rebar], [{:cowlib, "~> 1.0.0", [hex: :cowlib, repo: "hexpm", optional: false]}, {:ranch, "~> 1.0", [hex: :ranch, repo: "hexpm", optional: false]}], "hexpm"},
   "cowlib": {:hex, :cowlib, "1.0.2", "9d769a1d062c9c3ac753096f868ca121e2730b9a377de23dec0f7e08b1df84ee", [:make], [], "hexpm"},
   "credo": {:hex, :credo, "0.8.1", "137efcc99b4bc507c958ba9b5dff70149e971250813cbe7d4537ec7e36997402", [:mix], [{:bunt, "~> 0.2.0", [hex: :bunt, repo: "hexpm", optional: false]}], "hexpm"},
-  "elixir_script": {:git, "git@github.com:elixirscript/elixirscript.git", "7bd6254d46ec217123148a7773a5250f79a52c2f", []},
+  "elixir_script": {:git, "git@github.com:craigspaeth/elixirscript.git", "739208aa2602d2aafb52b11b804f2cfb11ad1b3d", [tag: "craig"]},
   "elixirscript": {:git, "git@github.com:elixirscript/elixirscript.git", "7bd6254d46ec217123148a7773a5250f79a52c2f", []},
   "estree": {:hex, :estree, "2.6.0", "86a301b0c355fa55c19e7ef9dceb1b1e983c6df526a2b7846818a38c258fc3fb", [:mix], [], "hexpm"},
   "fs": {:hex, :fs, "3.4.0", "6d18575c250b415b3cad559e6f97a4c822516c7bc2c10bfbb2493a8f230f5132", [:rebar3], [], "hexpm"},

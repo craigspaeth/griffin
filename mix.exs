@@ -43,7 +43,7 @@ defmodule Griffin.Mixfile do
       {:absinthe_plug, "~> 1.3.1"},
       {:cowboy, "~> 1.0.0"},
       {:credo, "~> 0.8.0-rc6", only: [:dev, :test], runtime: false},
-      {:elixir_script, git: "git@github.com:elixirscript/elixirscript.git"},
+      {:elixir_script, git: "git@github.com:craigspaeth/elixirscript.git", tag: "craig"},
       {:fs, "~> 3.4", override: true},
       {:httpotion, "~> 3.0.2"},
       {:inflex, "~> 1.8.1" },
