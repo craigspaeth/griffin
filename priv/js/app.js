@@ -243,7 +243,9 @@ var _NumberisInteger = Number.isInteger,
     function keydelete (D, E, F) {
       const G = []
       let H = !1
-      for (let I = 0; I < F.length; I++) { !1 == H && F[I].get(E - 1) === D ? H = !0 : G.push(F[I]) }
+      for (let I = 0; I < F.length; I++) {
+        !1 == H && F[I].get(E - 1) === D ? H = !0 : G.push(F[I])
+      }
       return G
     }
     class Variable {
@@ -607,7 +609,9 @@ var _NumberisInteger = Number.isInteger,
         if (is_variable(G.value)) {
           let H = getSize(G.unit, G.size)
           fillArray(E, H)
-        } else { E = E.concat(new h(G).value) }
+        } else {
+          E = E.concat(new h(G).value)
+        }
       }
       let F = D.values
       return function (G, H) {
@@ -701,9 +705,7 @@ var _NumberisInteger = Number.isInteger,
     }), k.set(Object.prototype, resolveObject)
     class MatchError extends Error {
       constructor (D) {
-        if ((super(), typeof D === 'symbol')) {
-          this.message = 'No match for: ' + D.toString()
-        } else if (Array.isArray(D)) {
+        if ((super(), typeof D === 'symbol')) { this.message = 'No match for: ' + D.toString() } else if (Array.isArray(D)) {
           let E = D.map(F => F.toString())
           this.message = 'No match for: ' + E
         } else {
@@ -757,9 +759,7 @@ var _NumberisInteger = Number.isInteger,
             throw new Error(`No implementation found for ${G}`)
           }
         }
-        for (const E in (this.registry = new Map(), this.fallback = null, D)) {
-          this[E] = createFun(E).bind(this)
-        }
+        for (const E in (this.registry = new Map(), this.fallback = null, D)) { this[E] = createFun(E).bind(this) }
       }
       implementation (D, E) {
         D === null ? this.fallback = E : this.registry.set(D, E)
@@ -774,7 +774,9 @@ var _NumberisInteger = Number.isInteger,
     }
     var q = {
       atom_to_binary: function atom_to_binary (D, E = Symbol.for('utf8')) {
-        if (E !== Symbol.for('utf8')) { throw new Error(`unsupported encoding ${E}`) }
+        if (E !== Symbol.for('utf8')) {
+          throw new Error(`unsupported encoding ${E}`)
+        }
         return D.__MODULE__ ? Symbol.keyFor(D.__MODULE__) : Symbol.keyFor(D)
       },
       binary_to_atom,
@@ -1031,7 +1033,9 @@ var _NumberisInteger = Number.isInteger,
         bitstring_comprehension: function bitstring_comprehension (D, E) {
           const F = run_generators(E.pop()(), E)
           let G = []
-          for (let H of F) { D.guard.apply(this, H) && G.push(D.fn.apply(this, H)) }
+          for (let H of F) {
+            D.guard.apply(this, H) && G.push(D.fn.apply(this, H))
+          }
           return G = G.map(H => g.BitString.integer(H)), new g.BitString(...G)
         },
         defmatchGen: function defmatchGen (...D) {
@@ -1087,9 +1091,7 @@ var _NumberisInteger = Number.isInteger,
               : E in D
                   ? F = E
                   : Symbol.for(E) in D && (F = Symbol.for(E)), F === null)
-          ) {
-            throw new Error(`Property ${E} not found in ${D}`)
-          }
+          ) { throw new Error(`Property ${E} not found in ${D}`) }
           return D[F] instanceof Function ? D[F]() : D[F]
         },
         defprotocol: function defprotocol (D) {
@@ -1157,9 +1159,7 @@ var _NumberisInteger = Number.isInteger,
             try {
               return G(I)
             } catch (J) {
-              if (J instanceof B.Patterns.MatchError) {
-                throw new Error('No Match Found in Else')
-              }
+              if (J instanceof B.Patterns.MatchError) { throw new Error('No Match Found in Else') }
               throw J
             }
           } else {
@@ -1398,6 +1398,21 @@ var _NumberisInteger = Number.isInteger,
 
   Bootstrap.Core.Functions.build_namespace(
     Elixir,
+    'Elixir.MyView'
+  ).__load = function (Elixir) {
+    if (Elixir.MyView.__exports) return Elixir.MyView.__exports
+
+    const __exports = {
+      __MODULE__: Symbol.for('Elixir.MyView')
+    }
+
+    Elixir.MyView.__exports = __exports
+
+    return __exports
+  }
+
+  Bootstrap.Core.Functions.build_namespace(
+    Elixir,
     'Elixir.App'
   ).__load = function (Elixir) {
     if (Elixir.App.__exports) return Elixir.App.__exports
@@ -1421,7 +1436,9 @@ var _NumberisInteger = Number.isInteger,
 
         let [html0] = Bootstrap.Core.Patterns.match(
           Bootstrap.Core.Patterns.variable(),
-          Elixir.MyView.__load(Elixir).render({})
+          Elixir.ViewEngine
+            .__load(Elixir)
+            .render(Elixir.MyView.__load(Elixir), {})
         )
 
         return Bootstrap.Core.Functions
@@ -1444,31 +1461,86 @@ var _NumberisInteger = Number.isInteger,
 
   Bootstrap.Core.Functions.build_namespace(
     Elixir,
-    'Elixir.MyView'
+    'Elixir.ViewEngine'
   ).__load = function (Elixir) {
-    if (Elixir.MyView.__exports) return Elixir.MyView.__exports
+    if (Elixir.ViewEngine.__exports) return Elixir.ViewEngine.__exports
 
     function render (...__function_args__) {
       let __arg_matches__ = null
 
       if (
         (__arg_matches__ = Bootstrap.Core.Patterns.match_or_default(
-          [Bootstrap.Core.Patterns.variable()],
+          [
+            Bootstrap.Core.Patterns.variable(),
+            Bootstrap.Core.Patterns.variable()
+          ],
           __function_args__,
-          _0 => {
+          (view0, model0) => {
             return true
           }
         )) !== null
       ) {
-        const [_0] = __arg_matches__;
+        const [view0, model0] = __arg_matches__
 
-        ('Hello')
+        Bootstrap.Core.Functions
+          .call_property(Bootstrap.Core.global, 'console')
+          .log(view0)
 
-        1
+        return to_html(view0, model0, view0.render(model0))
+      }
 
-        2
+      throw new Bootstrap.Core.Patterns.MatchError(__function_args__)
+    }
 
-        return 3
+    function to_html (...__function_args__) {
+      let __arg_matches__ = null
+
+      if (
+        (__arg_matches__ = Bootstrap.Core.Patterns.match_or_default(
+          [
+            Bootstrap.Core.Patterns.variable(),
+            Bootstrap.Core.Patterns.variable(),
+            Bootstrap.Core.Patterns.variable()
+          ],
+          __function_args__,
+          (view0, model0, el0) => {
+            return true
+          }
+        )) !== null
+      ) {
+        const [view0, model0, el0] = __arg_matches__
+
+        let [a0, b0, c0] = Bootstrap.Core.Patterns.match(
+          [
+            Bootstrap.Core.Patterns.variable(),
+            Bootstrap.Core.Patterns.variable(),
+            Bootstrap.Core.Patterns.variable()
+          ],
+          [true, false, true]
+        )
+
+        let _ref = [a0, b0, c0]
+
+        return Bootstrap.Core.SpecialForms.cond(
+          [
+            a0,
+            () => {
+              return 'a'
+            }
+          ],
+          [
+            b0,
+            () => {
+              return 'b'
+            }
+          ],
+          [
+            c0,
+            () => {
+              return 'c'
+            }
+          ]
+        )
       }
 
       throw new Bootstrap.Core.Patterns.MatchError(__function_args__)
@@ -1476,10 +1548,10 @@ var _NumberisInteger = Number.isInteger,
 
     const __exports = {
       render,
-      __MODULE__: Symbol.for('Elixir.MyView')
+      __MODULE__: Symbol.for('Elixir.ViewEngine')
     }
 
-    Elixir.MyView.__exports = __exports
+    Elixir.ViewEngine.__exports = __exports
 
     return __exports
   }
