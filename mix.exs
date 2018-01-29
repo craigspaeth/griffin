@@ -32,23 +32,23 @@ defmodule Griffin.Mixfile do
 
   def application do
     [
-      mod: {MyApp, []},
+      mod: {ExampleServerApp, []},
       applications: [:absinthe_plug, :logger, :cowboy, :plug, :httpotion]
     ]
   end
 
   def deps do
     [
-      {:absinthe, "~> 1.3.1"},
-      {:absinthe_plug, "~> 1.3.1"},
+      {:absinthe, "~> 1.4"},
+      {:absinthe_plug, "~> 1.4"},
       {:cowboy, "~> 1.0.0"},
       {:credo, "~> 0.8.0-rc6", only: [:dev, :test], runtime: false},
-      {:elixir_script, path: "~/elixirscript" },
+      {:exscript, path: "~/exscript" },
       {:fs, "~> 3.4", override: true},
       {:httpotion, "~> 3.0.2"},
       {:inflex, "~> 1.8.1" },
       {:mix_test_watch, "~> 0.3", only: :dev, runtime: false},
-      {:plug, "~> 1.0"},
+      {:plug, "~> 1.4"},
       {:poison, "~> 2.2"},
       {:uuid, "~> 1.1"}
     ]

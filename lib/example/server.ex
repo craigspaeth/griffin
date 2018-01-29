@@ -80,10 +80,9 @@ defmodule MyRouter do
     pass: ["*/*"],
     json_decoder: Poison
 
-  forward "/api",
+  forward "/graphiql",
     to: Absinthe.Plug.GraphiQL,
-    schema: @schema,
-    interface: :simple
+    schema: @schema
 
   forward "/api",
     to: Absinthe.Plug,
@@ -92,18 +91,34 @@ defmodule MyRouter do
   get "/" do
     model = ViewModel.init
     |> ViewModel.load_index
-    html = Griffin.View.Server.render View, model
+    html = """
+    <html>
+      <body>
+        #{Griffin.View.Server.render View, model}
+        <script>
+          #{ExScript.Compile.compile! File.read! "lib/example/client.ex"}
+          ExScript.Modules.ExampleClientApp.start()
+        </script>
+      </body>
+    </html>
+    """
     conn
     |> put_resp_content_type("text/html")
     |> send_resp(200, html)
   end
+
+  forward "/assets",
+    to: Plug.Static,
+    from: "lib/example",
+    at: "/",
+    only: ["client.js"]
 
   match _ do
     send_resp conn, 404, "Page not found"
   end
 end
 
-defmodule MyApp do
+defmodule ExampleServerApp do
   @moduledoc false
   use Application
 
