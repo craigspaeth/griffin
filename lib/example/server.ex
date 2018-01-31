@@ -94,9 +94,17 @@ defmodule MyRouter do
     html = """
     <html>
       <body>
-        #{Griffin.View.Server.render View, model}
+        <div id="main">#{Griffin.View.Server.render View, model}</div>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/react/16.2.0/umd/react.production.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/16.2.0/umd/react-dom.production.min.js"></script>
         <script>
-          #{ExScript.Compile.compile! File.read! "lib/example/client.ex"}
+          window.main = document.getElementById("main")
+          #{
+            ExScript.Compile.compile!(
+              File.read!("lib/griffin/view/client.ex") <>
+              File.read!("lib/example/client.ex")
+            )
+          }
           ExScript.Modules.ExampleClientApp.start()
         </script>
       </body>
