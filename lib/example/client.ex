@@ -28,6 +28,6 @@ end
 defmodule ExampleClientApp do
   def start do
     model = %{wizards: [%{name: "Harry"}]}
-    GriffinViewClient.render ClientView, model
+    Griffin.View.Client.render ClientView, model
   end
 end
