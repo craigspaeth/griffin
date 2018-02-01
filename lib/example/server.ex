@@ -101,6 +101,7 @@ defmodule MyRouter do
           window.main = document.getElementById("main")
           #{
             ExScript.Compile.compile!(
+              File.read!("lib/griffin/view/react.ex") <>
               File.read!("lib/griffin/view/client.ex") <>
               File.read!("lib/example/client.ex")
             )
