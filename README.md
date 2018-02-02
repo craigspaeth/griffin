@@ -28,10 +28,8 @@ defmodule DataModels.Wizard do
   def like(id) do
     table("wizards")
     |> get(id)
-    |> update(lambda fn (doc) ->
-      %{likes: doc["likes"] + 1}
-    end)
-    |> Database.run
+    |> update(lambda &(%{likes: &1["likes"] + 1}))
+    |> run
   end
 
   def send_welcome_email(ctx) when ctx.operation == :create do
@@ -42,7 +40,7 @@ defmodule DataModels.Wizard do
   def resolve(ctx) do
     ctx
     |> validate(fields)
-    |> to_db_statement
+    |> to_db_statement(table: "wizards")
     |> send_welcome_email
   end
 end
@@ -103,7 +101,7 @@ defmodule Views.WizardRolodex do
   def render(model) do
     case model.page do
       :home -> [:h1, "Welcome"],
-      :list -> [:div, Views.WizardList]
+      :list -> Views.WizardList
     end
   end
 end
@@ -139,17 +137,15 @@ Controllers are the central dispatch of a Griffin app. They handle input from us
 defmodule Controllers.WizardRolodex do
   import Griffin.Controller
 
-  get "/wizards", &ViewModels.WizardRolodex.index_page/1
-
-  on :like, &ViewModels.WizardRolodex.like_wizard/1
-
+  get "/wizards", :index_page
+  on :like, :like_wizard
   subscribe """
   wizards(sort: "-created_at") {
     name
     likes
     school
   }
-  """, &ViewModels.WizardRolodex.on_new_wizard/1
+  """, :on_new_wizard
 end
 ```
 
