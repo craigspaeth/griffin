@@ -25,6 +25,7 @@ defmodule DataModels.Wizard do
     ]]
   ]
 
+  @tag :mutation
   def like(id) do
     table("wizards")
     |> get(id)
@@ -32,7 +33,7 @@ defmodule DataModels.Wizard do
     |> run
   end
 
-  def send_welcome_email(ctx) when ctx.operation == :create do
+  defp send_welcome_email(ctx) when ctx.operation == :create do
     SendGrid.Mailer.send "Welcome #{ctx[:args][:name]}"
     ctx
   end
