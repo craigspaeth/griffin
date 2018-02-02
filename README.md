@@ -6,8 +6,6 @@ A WIP M²VC framework for Elixir(script) that packages up React and GraphQL in a
 
 Test with `mix test.watch` and run with `mix run --no-halt`
 
-Clean out dependencies with `mix deps.clean` and compile elixirscript with `mix js`
-
 ## M²VC Architecture
 
 ### Model (Data)
