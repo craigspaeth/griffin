@@ -47,8 +47,8 @@ defmodule Griffin.View.Server do
     inline_styles = if length(refs) > 0 do
       styles = refs
       |> Enum.map(&view.styles[String.to_atom &1])
-      |> Enum.reduce(fn (style_map, acc) -> Map.merge acc, style_map end)
-      |> Map.to_list
+      |> Enum.reduce(fn (style_map, acc) -> Keyword.merge acc, style_map end)
+      |> Enum.reverse
       |> Enum.map(fn ({k, v}) ->
           k = String.replace to_string(k), "_", "-"
           "#{k}: #{v}"

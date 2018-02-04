@@ -6,15 +6,15 @@ defmodule Griffin.View.ServerTest do
   defmodule View do
     @moduledoc false
 
-    def styles, do: %{
-      list: %{
+    def styles, do: [
+      list: [
         width: "100%",
         max_height: "100%"
-      },
-      colorful: %{
+      ],
+      colorful: [
         color: "fushia"
-      }
-    }
+      ]
+    ]
 
     def render(model) do
       [:ul@list@colorful,
@@ -24,6 +24,7 @@ defmodule Griffin.View.ServerTest do
 
   defmodule NestedView do
     @moduledoc false
+
     def render(model) do
       [:ul,
         [:li,

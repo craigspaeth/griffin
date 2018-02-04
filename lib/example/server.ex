@@ -38,15 +38,15 @@ defmodule View do
   @moduledoc false
 
   def styles do
-    %{
-      ul: %{
+    [
+      ul: [
         list_style: "none"
-      },
-      item: %{
+      ],
+      item: [
         font_size: "16px",
         font_family: "Helvetica"
-      }
-    }
+      ]
+    ]
   end
 
   def render(model) do
