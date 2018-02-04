@@ -15,8 +15,14 @@ defmodule Griffin.View.ClientTest do
   defmodule ViewWithStyles do
     @moduledoc false
 
+    def styles, do: [
+      strong: [
+        font_weight: "bold"
+      ]
+    ]
+
     def render(model) do
-      [:h1, "Hello #{model.name}"]
+      [:h1@strong, "Hello #{model.name}"]
     end
   end
 
@@ -33,10 +39,12 @@ defmodule Griffin.View.ClientTest do
 
   test "renders a Griffin view by building React elements" do
     Griffin.View.Client.render View, %{name: "Harry"}
-    assert called Griffin.View.React.render [:h1, nil, "Hello Harry"], "#main"
+    assert called Griffin.View.React.render ["h1", %{}, "Hello Harry"], "#main"
   end
 
   test "renders inline styles using shorthands" do
-
+    Griffin.View.Client.render ViewWithStyles, %{name: "Harry"}
+    result = ["h1", %{style: %{"font-weight" => "bold"}}, "Hello Harry"]
+    assert called Griffin.View.React.render result, "#main"
   end
 end
