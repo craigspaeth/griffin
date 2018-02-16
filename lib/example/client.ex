@@ -1,6 +1,4 @@
 defmodule ClientView do
-  @moduledoc false
-
   def styles do
     [
       ul: [
@@ -14,20 +12,22 @@ defmodule ClientView do
   end
 
   def render(model) do
-    [:ul,
+    [
+      :ul,
       if length(model.wizards) > 0 do
         for wizard <- model.wizards do
-          [:li, "Welcome #{wizard.name}"]
+          [:li@item, "Welcome #{wizard.name}"]
         end
       else
         [:h1, "No wizards"]
-      end]
+      end
+    ]
   end
 end
 
 defmodule ExampleClientApp do
   def start do
-    model = %{wizards: [%{name: "Harry"}]}
-    Griffin.View.Client.render ClientView, model
+    model = %{wizards: [%{name: "Harry Potter"}]}
+    Griffin.View.Client.render(ClientView, model)
   end
 end

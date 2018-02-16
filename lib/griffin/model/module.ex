@@ -9,14 +9,16 @@ defmodule Griffin.Model.Module do
   Gets the singular and plural namespace of a model module.
   """
   def namespaces(model) do
-    if is_tuple model.namespace do
+    if is_tuple(model.namespace) do
       model.namespace
     else
-      plural = model.namespace
-      |> to_string
-      |> Inflex.pluralize
-      |> String.to_atom
-      {model.namespace,  plural}
+      plural =
+        model.namespace
+        |> to_string
+        |> Inflex.pluralize()
+        |> String.to_atom()
+
+      {model.namespace, plural}
     end
   end
 
@@ -112,12 +114,12 @@ defmodule Griffin.Model.Module do
   next eventually returning a `ctx` map to be used for a response.
   """
   def resolve(model, crud_op, args) do
-    model.resolve %{
+    model.resolve(%{
       _model: model,
       args: args,
       res: %{},
       op: crud_op,
       errs: []
-    }
+    })
   end
 end

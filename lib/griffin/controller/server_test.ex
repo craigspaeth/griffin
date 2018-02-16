@@ -8,7 +8,7 @@ defmodule Griffin.Controller.Server do
   Takes a Griffin view and renders it to HTML given a view model
   """
   def render(view, model) do
-    IO.inspect view
-    IO.inspect model
+    IO.inspect(view)
+    IO.inspect(model)
   end
 end

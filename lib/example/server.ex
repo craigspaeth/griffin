@@ -1,14 +1,13 @@
 defmodule Model do
-  @moduledoc false
-
   import Griffin.Model
   import Griffin.Model.Adapters.Memory
 
   def namespace, do: {:wizard, :wizards}
 
-  def fields, do: [
-    name: [:string, :required]
-  ]
+  def fields,
+    do: [
+      name: [:string, :required]
+    ]
 
   def resolve(ctx) do
     ctx
@@ -18,25 +17,22 @@ defmodule Model do
 end
 
 defmodule ViewModel do
-  @moduledoc false
-
   import Griffin.ViewModel.Server
 
   @api "http://localhost:4001/api"
 
-  def init, do: %{
-    wizards: []
-  }
+  def init,
+    do: %{
+      wizards: []
+    }
 
   def load_index(model) do
-    %{wizards: wizards} = gql! @api, "{ wizards { name } }"
-    set model, wizards: wizards
+    %{wizards: wizards} = gql!(@api, "{ wizards { name } }")
+    set(model, wizards: wizards)
   end
 end
 
 defmodule View do
-  @moduledoc false
-
   def styles do
     [
       ul: [
@@ -50,94 +46,104 @@ defmodule View do
   end
 
   def render(model) do
-    [:ul@ul,
+    [
+      :ul@ul,
       if length(model.wizards) > 0 do
         for wizard <- model.wizards do
-          [:li@item,
-            [:h1, "Welcome #{wizard.name}"]]
+          [:li@item, [:h1, "Welcome #{wizard.name}"]]
         end
       else
         [:h1, "No wizards"]
-      end]
+      end
+    ]
   end
 end
 
 defmodule Controller do
-  @moduledoc false
 end
 
 defmodule MyRouter do
-  @moduledoc false
   use Plug.Router
 
-  @schema Griffin.Model.GraphQL.schemaify [Model]
+  @schema Griffin.Model.GraphQL.schemaify([Model])
 
-  plug :match
-  plug :dispatch
+  plug(:match)
+  plug(:dispatch)
 
-  plug Plug.Parsers,
+  plug(
+    Plug.Parsers,
     parsers: [:urlencoded, :multipart, :json, Absinthe.Plug.Parser],
     pass: ["*/*"],
     json_decoder: Poison
+  )
 
-  forward "/graphiql",
+  forward(
+    "/graphiql",
     to: Absinthe.Plug.GraphiQL,
     schema: @schema
+  )
 
-  forward "/api",
+  forward(
+    "/api",
     to: Absinthe.Plug,
     schema: @schema
+  )
 
   get "/" do
-    model = ViewModel.init
-    |> ViewModel.load_index
+    model =
+      ViewModel.init()
+      |> ViewModel.load_index()
+
     html = """
     <html>
       <body>
-        <div id="main">#{Griffin.View.Server.render View, model}</div>
+        <div id="main">#{Griffin.View.Server.render(View, model)}</div>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/react/16.2.0/umd/react.production.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/16.2.0/umd/react-dom.production.min.js"></script>
         <script>
-          window.main = document.getElementById("main")
+          window.main = document.getElementById("main");
           #{
-            ExScript.Compile.compile!(
-              File.read!("lib/griffin/view/react.ex") <>
-              File.read!("lib/griffin/view/client.ex") <>
-              File.read!("lib/example/client.ex")
-            )
-          }
+      ExScript.Compile.compile!(
+        File.read!("lib/griffin/view/react.ex") <>
+          File.read!("lib/griffin/view/client.ex") <> File.read!("lib/example/client.ex")
+      )
+    }
           ExScript.Modules.ExampleClientApp.start()
         </script>
       </body>
     </html>
     """
+
     conn
     |> put_resp_content_type("text/html")
     |> send_resp(200, html)
   end
 
-  forward "/assets",
+  forward(
+    "/assets",
     to: Plug.Static,
     from: "lib/example",
     at: "/",
     only: ["client.js"]
+  )
 
   match _ do
-    send_resp conn, 404, "Page not found"
+    send_resp(conn, 404, "Page not found")
   end
 end
 
 defmodule ExampleServerApp do
-  @moduledoc false
   use Application
 
   def start(_type, _args) do
-    Griffin.Model.Adapters.Memory.init
+    Griffin.Model.Adapters.Memory.init()
+
     children = [
-      Plug.Adapters.Cowboy.child_spec(:http, MyRouter, [], [port: 4001])
+      Plug.Adapters.Cowboy.child_spec(:http, MyRouter, [], port: 4001)
     ]
+
     opts = [strategy: :one_for_one, name: MyApp.Supervisor]
-    IO.puts "Listning on 4001"
+    IO.puts("Listning on 4001")
     Supervisor.start_link(children, opts)
   end
 end

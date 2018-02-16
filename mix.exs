@@ -22,8 +22,8 @@ defmodule Griffin.Mixfile do
       app: :griffin,
       version: "0.1.0",
       elixir: "~> 1.5",
-      build_embedded: Mix.env == :prod,
-      start_permanent: Mix.env == :prod,
+      build_embedded: Mix.env() == :prod,
+      start_permanent: Mix.env() == :prod,
       deps: deps(),
       description: description(),
       package: package()

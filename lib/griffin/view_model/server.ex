@@ -13,17 +13,20 @@ defmodule Griffin.ViewModel.Server do
   the client-side this will trigger re-renders of the view.
   """
   def set(model, attrs) do
-    deep_merge model, Enum.into(attrs, %{})
+    deep_merge(model, Enum.into(attrs, %{}))
   end
 
   @doc """
   Utility to help with sending a graphql request
   """
   def gql!(endpoint, query) do
-    response = HTTPotion.post! endpoint, [
-      body: query,
-      headers: ["Content-Type": "application/graphql"]
-    ]
+    response =
+      HTTPotion.post!(
+        endpoint,
+        body: query,
+        headers: ["Content-Type": "application/graphql"]
+      )
+
     Poison.decode!(response.body, keys: :atoms!).data
   end
 
