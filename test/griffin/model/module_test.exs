@@ -1,11 +1,9 @@
 defmodule Griffin.Model.ModuleTest do
-  @moduledoc false
-
   use ExUnit.Case
 
   setup do
-    Griffin.Model.Adapters.Memory.init
-    Griffin.Model.Adapters.Memory.empty
+    Griffin.Model.Adapters.Memory.init()
+    Griffin.Model.Adapters.Memory.empty()
     :ok
   end
 
@@ -18,16 +16,23 @@ defmodule Griffin.Model.ModuleTest do
 
     def namespace, do: {:wizard, :wizards}
 
-    def fields, do: [
-      name: [:string, :required],
-      school: [:map, of: [
-        name: [:string],
-        geo: [:map, of: [
-          lat: [:int, :required],
-          lng: [:int, :required]
-        ]]
-      ]]
-    ]
+    def fields,
+      do: [
+        name: [:string, :required],
+        school: [
+          :map,
+          of: [
+            name: [:string],
+            geo: [
+              :map,
+              of: [
+                lat: [:int, :required],
+                lng: [:int, :required]
+              ]
+            ]
+          ]
+        ]
+      ]
 
     def resolve(ctx) do
       ctx
@@ -37,43 +42,47 @@ defmodule Griffin.Model.ModuleTest do
   end
 
   test "run a model's resolver" do
-    ctx = Griffin.Model.Module.resolve WizardModel, :create, %{
-      name: "Harry Potter",
-      school: %{
-        name: "Hogwarts",
-        geo: %{
-          lat: 10,
-          lng: 20
+    ctx =
+      Griffin.Model.Module.resolve(WizardModel, :create, %{
+        name: "Harry Potter",
+        school: %{
+          name: "Hogwarts",
+          geo: %{
+            lat: 10,
+            lng: 20
+          }
         }
-      }
-    }
+      })
+
     assert ctx.res == %{
-      id: 0,
-      name: "Harry Potter",
-      school: %{
-        name: "Hogwarts",
-        geo: %{
-          lat: 10,
-          lng: 20
-        }
-      }
-    }
+             id: 0,
+             name: "Harry Potter",
+             school: %{
+               name: "Hogwarts",
+               geo: %{
+                 lat: 10,
+                 lng: 20
+               }
+             }
+           }
   end
 
   test "surfaces validation errors through a model's resolver" do
-    ctx = Griffin.Model.Module.resolve WizardModel, :create, %{
-      name: "Harry"
-    }
+    ctx =
+      Griffin.Model.Module.resolve(WizardModel, :create, %{
+        name: "Harry"
+      })
+
     [{_, msg}] = ctx.errs
-    assert String.match? msg, ~r/school with value nil is invalid/
+    assert String.match?(msg, ~r/school with value nil is invalid/)
   end
 
   test "automatically pluralizes a namespace" do
     defmodule FooModel do
-      @moduledoc false
       def namespace, do: :dog
     end
-    {_, plural} = Griffin.Model.Module.namespaces FooModel
+
+    {_, plural} = Griffin.Model.Module.namespaces(FooModel)
     assert plural == :dogs
   end
 end

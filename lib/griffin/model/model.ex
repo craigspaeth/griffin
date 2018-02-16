@@ -12,13 +12,15 @@ defmodule Griffin.Model do
   add validations to the errors
   """
   def validate(%{errs: errs} = ctx, _) when length(errs) > 0, do: ctx
+
   def validate(ctx, fields) do
-    fields = DSL.for_crud_op fields, ctx.op
-    is_valid = Validations.valid? ctx.args, fields
+    fields = DSL.for_crud_op(fields, ctx.op)
+    is_valid = Validations.valid?(ctx.args, fields)
+
     if is_valid do
       ctx
     else
       %{ctx | errs: ctx.errs ++ Validations.errors(ctx.args, fields)}
-    end 
+    end
   end
 end

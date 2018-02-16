@@ -14,7 +14,7 @@ defmodule Griffin.Model.Adapters do
     Starts the agent used to persist the in-memory database.
     """
     def init do
-      Agent.start_link fn -> %{} end, name: __MODULE__
+      Agent.start_link(fn -> %{} end, name: __MODULE__)
     end
 
     @doc """
@@ -22,38 +22,46 @@ defmodule Griffin.Model.Adapters do
     updates the response.
     """
     def to_db_statement(%{errs: errs} = ctx, _) when length(errs) > 0, do: ctx
+
     def to_db_statement(%{op: op} = ctx) do
-      {_, col} = Griffin.Model.Module.namespaces ctx._model
-      res = case op do
-        :create -> create col, ctx.args
-        :read -> read col, ctx.args
-        :update -> update col, ctx.args
-        :delete -> delete col, ctx.args
-        :list -> list col, ctx.args
-      end
+      {_, col} = Griffin.Model.Module.namespaces(ctx._model)
+
+      res =
+        case op do
+          :create -> create(col, ctx.args)
+          :read -> read(col, ctx.args)
+          :update -> update(col, ctx.args)
+          :delete -> delete(col, ctx.args)
+          :list -> list(col, ctx.args)
+        end
+
       %{ctx | res: res}
     end
 
     def empty do
-      Agent.update __MODULE__, fn _ -> %{} end
+      Agent.update(__MODULE__, fn _ -> %{} end)
     end
 
     def create(col, doc) do
-      Agent.update __MODULE__, fn map ->
-        old_col = Map.get map, col
-        doc = case {is_nil(old_col), is_nil(doc[:id])} do
-          {true, true} -> Map.put doc, :id, 0
-          {false, true} -> Map.put doc, :id, length(old_col)
-          {_, false} -> doc
-        end
+      Agent.update(__MODULE__, fn map ->
+        old_col = Map.get(map, col)
+
+        doc =
+          case {is_nil(old_col), is_nil(doc[:id])} do
+            {true, true} -> Map.put(doc, :id, 0)
+            {false, true} -> Map.put(doc, :id, length(old_col))
+            {_, false} -> doc
+          end
+
         new_col = if old_col, do: map[col] ++ [doc], else: [doc]
-        Map.put map, col, new_col
-      end
-      Agent.get(__MODULE__, &Map.get(&1, col)) |> List.last
+        Map.put(map, col, new_col)
+      end)
+
+      Agent.get(__MODULE__, &Map.get(&1, col)) |> List.last()
     end
 
     def read(col, args) do
-      List.first list col, args
+      List.first(list(col, args))
     end
 
     def update(_, _) do
@@ -65,13 +73,17 @@ defmodule Griffin.Model.Adapters do
     end
 
     def list(col, args) do
-      docs = Agent.get __MODULE__, &Map.get(&1, col)
-      docs = docs || []
-      |> Enum.filter(fn (doc) ->
-        subset = Map.take doc, Map.keys(args)
-        subset == args
-      end)
-      |> List.flatten
+      docs = Agent.get(__MODULE__, &Map.get(&1, col))
+
+      docs =
+        docs ||
+          []
+          |> Enum.filter(fn doc ->
+            subset = Map.take(doc, Map.keys(args))
+            subset == args
+          end)
+          |> List.flatten()
+
       docs
     end
   end
