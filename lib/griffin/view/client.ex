@@ -10,7 +10,7 @@ defmodule Griffin.View.Client do
     attrs =
       if Keyword.keyword?(List.first(children)) do
         Enum.reduce(List.first(children), %{}, fn {k, v}, acc ->
-          Map.put(acc, Atom.to_string(k), v)
+          Map.put(acc, k, v)
         end)
       else
         nil
@@ -18,15 +18,14 @@ defmodule Griffin.View.Client do
 
     [_ | childs] = if attrs != nil, do: children, else: [nil] ++ children
     styles = inline_styles(view, tag_label)
-    attrs = Map.merge(attrs || %{}, %{style: styles})
+    attrs = Map.merge(attrs, %{style: styles})
 
-    cond do
+    r = cond do
       is_bitstring(List.first(childs)) ->
         [tag_name | _] =
           tag_label
           |> Atom.to_string()
           |> String.split("@")
-
         Griffin.View.React.text_node(tag_name, attrs, List.first(childs))
 
       is_list(List.first(childs)) ->
@@ -35,6 +34,7 @@ defmodule Griffin.View.Client do
       true ->
         Enum.map(childs, fn el -> to_react_el(view, el) end)
     end
+    r
   end
 
   # Parses the first item in the DSL into an open and closing tag string
