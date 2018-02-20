@@ -6,6 +6,16 @@ A WIP M²VC framework for Elixir(script) that packages up React and GraphQL in a
 
 Test with `mix test.watch` and run with `mix run --no-halt`
 
+Seed data with GraphQL
+
+```
+curl \
+  -X POST \
+  -H "Content-Type: application/graphql" \
+  --data 'mutation { create_wizard(name: "Harry") { name } }' \
+  http://localhost:4001/api
+```
+
 ## M²VC Architecture
 
 ### Model (Data)

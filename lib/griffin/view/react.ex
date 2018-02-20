@@ -7,8 +7,6 @@ defmodule Griffin.View.React do
   Creates a React element with a text node as the inner child
   """
   def text_node(tag_label, attrs, text) do
-    IO.puts(attrs)
-
     JS.root()["React"].createElement(
       fn props ->
         JS.root()["React"].createElement(tag_label, attrs, text)
@@ -21,6 +19,8 @@ defmodule Griffin.View.React do
   Uses ReactDOM to render React elements to a given selector in the document
   """
   def render(el, selector) do
+    # klass = JS.embed "class Wrapper extends React.Component { componentDidMount() { window.forceUpdate = () => this.forceUpdate() } render() { return el } }"
+    # wrapper = JS.root()["React"].createElement(klass, %{})
     JS.root()["ReactDOM"].render(el, JS.root().document.querySelector(selector))
   end
 end
