@@ -45,7 +45,7 @@ defmodule Griffin.View.Client do
     if length(refs) > 0 do
       refs
       |> Enum.map(fn (k) ->
-        Keyword.get(view.styles(nil), String.to_atom(k))
+        Keyword.get(view.styles(nil), k)
       end)
       |> Enum.reduce(%{}, fn {_, v}, acc ->
         Enum.reduce(v, %{}, fn {k, v} ->
