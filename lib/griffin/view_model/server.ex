@@ -9,8 +9,7 @@ defmodule Griffin.ViewModel.Server do
 
   @doc """
   A convenience function that takes a model map and a keyword list of updates
-  attributes as input, returning a deep merged update of the map as output. On
-  the client-side this will trigger re-renders of the view.
+  attributes as input, returning a deep merged update of the map as output.
   """
   def set(model, attrs) do
     deep_merge(model, Enum.into(attrs, %{}))
