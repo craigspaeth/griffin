@@ -44,14 +44,15 @@ defmodule Griffin.View.Client do
 
     if length(refs) > 0 do
       refs
-      |> Enum.map(&view.styles[String.to_atom(&1)])
-      |> Enum.reduce(fn style_map, acc -> Keyword.merge(acc, style_map) end)
-      |> Enum.reverse()
-      |> Enum.map(fn {k, v} ->
-        k = String.replace(Atom.to_string(k), "_", "-")
-        {k, v}
+      |> Enum.map(fn (k) ->
+        Keyword.get(view.styles(nil), String.to_atom(k))
       end)
-      |> Enum.into(%{})
+      |> Enum.reduce(%{}, fn {_, v}, acc ->
+        Enum.reduce(v, %{}, fn {k, v} ->
+          k = String.replace(Atom.to_string(k), "_", "-")
+          %{k => v}
+        end)
+      end)
     else
       nil
     end
