@@ -9,12 +9,13 @@ defmodule Griffin.View.ClientTest do
   end
 
   defmodule ViewWithStyles do
-    def styles,
-      do: [
+    def styles(_) do
+      [
         strong: [
           font_weight: "bold"
         ]
       ]
+    end
 
     def render(model) do
       [:h1@strong, "Hello #{model.name}"]
