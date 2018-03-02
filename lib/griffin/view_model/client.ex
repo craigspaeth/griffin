@@ -17,14 +17,9 @@ defmodule Griffin.ViewModel.Client do
   @doc """
   Utility to help with sending a graphql request
   """
-  def gql!(endpoint, query, callback) do
+  def gql!(endpoint, query) do
     res = JS.embed "fetch(endpoint, { body: query, headers: { 'content-type': 'application/graphql' }, method: 'POST' })"
-    res.then fn (r) ->
-      j = r.json(nil)
-      j.then fn (r) ->
-        callback.(r.data)
-      end
-    end
+    res.then fn (r) -> r.json(nil) end
   end
 
   # Deep merge map utility copied from
