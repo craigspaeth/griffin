@@ -1,4 +1,5 @@
 defmodule MyApp.ViewModel do
+  import ExScript.Await
 
   def init do
     %{
@@ -6,15 +7,8 @@ defmodule MyApp.ViewModel do
     }
   end
 
-  def load_index(model, callback) do
+  def load_index(model) do
     mod = Griffin.ViewModel.Server || Griffin.ViewModel.Client
-    data = mod.gql!(
-      "http://localhost:4001/api",
-      "{ wizards { name } }",
-      fn (data) ->
-        # model = mod.set(model, wizards: data.wizards)
-        callback.(data)
-      end
-    )
+    await mod.gql! "http://localhost:4001/api", "{ wizards { name } }"
   end
 end

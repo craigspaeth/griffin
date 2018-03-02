@@ -17,6 +17,7 @@ defmodule Griffin.View.Client do
       end
 
     [_ | childs] = if attrs != nil, do: children, else: [nil] ++ children
+
     styles = inline_styles(view, tag_label)
     attrs = Map.merge(attrs, %{style: styles})
 
@@ -29,12 +30,22 @@ defmodule Griffin.View.Client do
         Griffin.View.React.text_node(tag_name, attrs, List.first(childs))
 
       is_list(List.first(childs)) ->
-        Enum.map(childs, fn el -> to_react_el(view, el) end)
+        children_to_react_els(view, childs)
 
       true ->
         Enum.map(childs, fn el -> to_react_el(view, el) end)
     end
     r
+  end
+
+  defp children_to_react_els(view, children) do
+    Enum.map(children, fn el ->
+      if is_list(List.first(el)) do
+        children_to_react_els(view, el)
+      else
+        to_react_el(view, el)
+      end
+    end)
   end
 
   # Parses the first item in the DSL into an open and closing tag string
