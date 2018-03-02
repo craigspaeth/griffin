@@ -47,37 +47,36 @@ defmodule MyRouter do
   )
 
   get "/" do
-    model =
-      MyApp.ViewModel.init()
-      |> MyApp.ViewModel.load_index()
+    MyApp.ViewModel.init()
+    |> MyApp.ViewModel.load_index fn (model) ->
+      html = """
+      <html>
+        <body>
+          <div id="main">#{Griffin.View.Server.render(MyApp.View, model)}</div>
+          <script src="https://cdnjs.cloudflare.com/ajax/libs/react/16.2.0/umd/react.production.min.js"></script>
+          <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/16.2.0/umd/react-dom.production.min.js"></script>
+          <script>
+            window.main = document.getElementById("main");
+            #{
+              ExScript.Compile.compile!(Enum.join([
+                File.read!("lib/griffin/view/react.ex"),
+                File.read!("lib/griffin/view/client.ex"),
+                File.read!("lib/griffin/view_model/client.ex"),
+                File.read!("lib/example/view.ex"),
+                File.read!("lib/example/view_model.ex"),
+                File.read!("lib/example/client.ex")
+              ]))
+            }
+            ExScript.Modules.ExampleClientApp.start()
+          </script>
+        </body>
+      </html>
+      """
 
-    html = """
-    <html>
-      <body>
-        <div id="main">#{Griffin.View.Server.render(MyApp.View, model)}</div>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/react/16.2.0/umd/react.production.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/16.2.0/umd/react-dom.production.min.js"></script>
-        <script>
-          window.main = document.getElementById("main");
-          #{
-            ExScript.Compile.compile!(Enum.join([
-              File.read!("lib/griffin/view/react.ex"),
-              File.read!("lib/griffin/view/client.ex"),
-              File.read!("lib/griffin/view_model/client.ex"),
-              File.read!("lib/example/view.ex"),
-              File.read!("lib/example/view_model.ex"),
-              File.read!("lib/example/client.ex")
-            ]))
-          }
-          ExScript.Modules.ExampleClientApp.start()
-        </script>
-      </body>
-    </html>
-    """
-
-    conn
-    |> put_resp_content_type("text/html")
-    |> send_resp(200, html)
+      conn
+      |> put_resp_content_type("text/html")
+      |> send_resp(200, html)
+    end
   end
 
   forward(

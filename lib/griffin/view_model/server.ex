@@ -18,7 +18,7 @@ defmodule Griffin.ViewModel.Server do
   @doc """
   Utility to help with sending a graphql request
   """
-  def gql!(endpoint, query) do
+  def gql!(endpoint, query, callback) do
     response =
       HTTPotion.post!(
         endpoint,
@@ -26,7 +26,7 @@ defmodule Griffin.ViewModel.Server do
         headers: ["Content-Type": "application/graphql"]
       )
 
-    Poison.decode!(response.body, keys: :atoms!).data
+    callback.(Poison.decode!(response.body, keys: :atoms!).data)
   end
 
   # Deep merge map utility copied from

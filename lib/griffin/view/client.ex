@@ -29,7 +29,7 @@ defmodule Griffin.View.Client do
         Griffin.View.React.text_node(tag_name, attrs, List.first(childs))
 
       is_list(List.first(childs)) ->
-        Enum.map(List.first(childs), fn el -> to_react_el(view, el) end)
+        Enum.map(childs, fn el -> to_react_el(view, el) end)
 
       true ->
         Enum.map(childs, fn el -> to_react_el(view, el) end)
