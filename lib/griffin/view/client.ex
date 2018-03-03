@@ -19,9 +19,9 @@ defmodule Griffin.View.Client do
     [_ | childs] = if attrs != nil, do: children, else: [nil] ++ children
 
     styles = inline_styles(view, tag_label)
-    attrs = Map.merge(attrs, %{style: styles})
+    attrs = Map.merge(attrs || %{}, %{style: styles})
 
-    r = cond do
+    cond do
       is_bitstring(List.first(childs)) ->
         [tag_name | _] =
           tag_label
@@ -35,7 +35,6 @@ defmodule Griffin.View.Client do
       true ->
         Enum.map(childs, fn el -> to_react_el(view, el) end)
     end
-    r
   end
 
   defp children_to_react_els(view, children) do
@@ -56,12 +55,12 @@ defmodule Griffin.View.Client do
     if length(refs) > 0 do
       refs
       |> Enum.map(fn (k) ->
-        Keyword.get(view.styles(nil), k)
+        Keyword.get(view.styles(nil), String.to_atom(k))
       end)
-      |> Enum.reduce(%{}, fn {_, v}, acc ->
-        Enum.reduce(v, %{}, fn {k, v} ->
+      |> Enum.reduce(%{}, fn keywords, acc ->
+        Enum.reduce(keywords, %{}, fn {k, v}, acc ->
           k = String.replace(Atom.to_string(k), "_", "-")
-          %{k => v}
+          Map.merge acc, %{k => v}
         end)
       end)
     else
