@@ -59,7 +59,7 @@ end
 
 ### Model (View)
 
-View models describe the state of a Griffin app in a single map. View models also contain logic for persistence, state transitions, and functions deriving view-friendly state. When a view model is updated through the `set` function the UI automatically re-renders.
+View models encapsulate state and state changes of a Griffin app. View models hold state in a single map, define pipelines for state transitions, and expand state into a view-friendly model with `model`. Passing a state map to `update` will cause the UI to re-render with the expanded model passed in.
 
 ```elixir
 defmodule ViewModels.WizardRolodex do
@@ -67,14 +67,58 @@ defmodule ViewModels.WizardRolodex do
 
   @api "http://localhost:3000/api"
 
-  def initial_state, do: %{
+  def model(state = %{
     loading: false,
     page: :home,
     wizards: []
-  }
+  }) do
+    %{
+      state |
+      wizard_names: wizard_names(state)
+    }
+  end
 
-  def index_page(ctx) do
-    set loading: true
+  def on_index_page(state) do
+    state
+    |> page(:index)
+    |> loading
+    |> update
+    |> fetch_wizards
+    |> loaded
+    |> update
+  end
+
+  def on_like_wizard(state, id) do
+    state
+    |> like_wizard(id)
+    |> update
+    |> like_wizard_mutation(id)
+  end
+
+  def on_new_wizards(state, wizards) do
+    %{state | state.wizards ++ wizards}
+  end
+
+  def like_wizard(state, id) do
+    wizards = get :wizards
+    wizard = Enum.find id: id
+    liked_wizard = %{wizard | likes: wizard.likes + 1}
+    %{state | wizards: Enum.reject(wizards) ++ [liked_wizard]}
+  end
+
+  def like_wizard_mutation(_, id) do
+    mutate! @api, """
+      like_wizard(id: #{id}) {
+        likes
+      }
+    """
+  end
+
+  def page(state, page), do: %{state | page: page}
+
+  def loading(state), do: %{state | loading: true}
+
+  def fetch_wizards(state) do
     %{wizards: wizards} = query! @api, """
     wizards(limit: 10) {
       name
@@ -82,24 +126,12 @@ defmodule ViewModels.WizardRolodex do
       school
     }
     """
-    set loading: false, page: :list, wizards: wizards
+    %{state | wizards: wizards}
   end
 
-  def like_wizard(id) do
-    wizards = get :wizards
-    wizard = Enum.find id: id
-    liked_wizard = %{wizard | likes: wizard.likes + 1}
-    set wizards: Enum.reject(wizards) ++ [liked_wizard]
-    mutate! @api, """
-    like_wizard(id: #{id}) {
-      likes
-    }
-    """
-  end
+  def loaded(state), do: %{state | loaded: false}
 
-  def on_new_wizard(%{wizards}) do
-    set wizards: wizards
-  end
+  def wizard_names(state), do: Enum.map state.wizards, &(&1.name)
 end
 ```
 
@@ -133,7 +165,7 @@ defmodule Views.WizardList do
     [:ul@list,
       for wizard <- model.wizards do
         [:li@item, [
-          [:p, model.name"],
+          [:p, wizard.name"],
           [:button, [onclick: [:like, wizard.id]], "Follow"]]]
       end]
   end
@@ -142,21 +174,28 @@ end
 
 ### Controller
 
-Controllers are the central dispatch of a Griffin app. They handle input from users (routes, clicks, keydowns, etc.) and systems (push events, subscriptions, timers, etc.) and delegate corresponding state changes to the view model.
+Controllers are the central glue point, and event emitter, of a Griffin app. They handle input from users (routes, clicks, keydowns, etc.) and systems (push events, subscriptions, timers, etc.) and delegate corresponding state changes to the view model.
 
 ```elixir
 defmodule Controllers.WizardRolodex do
   import Griffin.Controller
 
-  get "/wizards", :index_page
-  on :like, :like_wizard
-  subscribe """
-  wizards(sort: "-created_at") {
-    name
-    likes
-    school
-  }
-  """, :on_new_wizard
+  def init do
+    Router.get "/wizards", &emit(:index_page)
+    on :index_page, &ViewModel.on_index_page/1,
+  end
+
+  def browser_init do
+    GraphQL.subscribe """
+      wizards(sort: "-created_at") {
+        name
+        likes
+        school
+      }
+    """, &emit(:new_wizards, &1)
+    on :like, &ViewModel.on_like_wizard/2,
+    on :new_wizards, &ViewModel.on_new_wizards/2
+  end
 end
 ```
 
