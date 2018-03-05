@@ -1,6 +1,6 @@
 # Griffin
 
-A WIP M²VC framework for Elixir(script) that packages up React and GraphQL in a single cohesive full-stack architecture.
+A WIP MVC framework for Elixir(script) that packages up React and GraphQL in a single minimalistic full-stack architecture.
 
 ## Getting Started
 
@@ -16,54 +16,60 @@ curl \
   http://localhost:4001/api
 ```
 
-## M²VC Architecture
+## MVC Architecture
 
 ### Model (Data)
 
-Griffin models are split into two parts—data models and view models. Data models describe and validate the shape of data stored in your database, the business logic related to that shape of data, and the external operations possible on that data exposed via GraphQL.
+Griffin models are split into two parts—data models and view models. Data models describe GraphQL schemas by returning a DSL from `model`. Validation and persistence to the database can be composed from resolve functions.
 
 ````elixir
-defmodule DataModels.Wizard do
-  import Griffin.DataModel
-  import Griffin.DataModel.Adapters.RethinkDB
+defmodule Wizards.DataModel do
+  def model do
+    attrs = [
+      name: :string!,
+      school: :school
+    ]
+    [
+      types: [
+        wizard: [
+          id: :id!
+        ] ++ attrs,
+        school: [
+          name: :string,
+          banner: :string
+        ]
+      ],
+      mutation: [
+        create_wizard: [:wizard, attrs, Plugin.crud(:create)],
+        update_wizard: [:wizard, attrs, Plugin.crud(:update)],
+        delete_wizard: [:wizard, attrs, Plugin.crud(:delete)],
+        like_wizard: [:wizard, [id: :id!], &resolve_like_wizard/3]
+      ],
+      query: [
+        wizard: [:wizard, attrs, crud(:read)],
+        wizards: [:wizard, attrs, crud(:list)],
+      ]
+    ]
+  end
 
-  def fields, do: [
-    name: [:string, :required],
-    school: [:map, of: [
-      name: [:string],
-      banner: [:string]
-    ]]
-  ]
+  def resolve_like_wizard(args, _, _), do: like args.id
 
-  @tag :mutation
   def like(id) do
     table("wizards")
     |> get(id)
     |> update(lambda &(%{likes: &1["likes"] + 1}))
     |> run
   end
-
-  defp send_welcome_email(ctx) when ctx.operation == :create do
-    SendGrid.Mailer.send "Welcome #{ctx[:args][:name]}"
-    ctx
-  end
-
-  def resolve(ctx) do
-    ctx
-    |> validate(fields)
-    |> to_db_statement(table: "wizards")
-    |> send_welcome_email
-  end
 end
 ````
 
 ### Model (View)
 
-View models encapsulate state, and state changes, of a Griffin app. View models hold state in a single map, define pipelines for state transitions, and expand state into a view-friendly model with `model`. Passing a state map to `update` will cause the UI to re-render with the expanded model passed into views.
+View models encapsulate state, and state changes, of a Griffin app. View models hold state in a single map, define pipelines for state transitions, and expand state into a view-friendly model with `model`.
 
 ```elixir
-defmodule ViewModels.WizardRolodex do
-  import Griffin.ViewModel
+defmodule Wizards.ViewModel do
+  import Wizards.Controller.Emitter
 
   @api "http://localhost:3000/api"
 
@@ -82,21 +88,21 @@ defmodule ViewModels.WizardRolodex do
     state
     |> page(:index)
     |> loading
-    |> update
+    |> &(emit :render, &1) 
     |> fetch_wizards
     |> loaded
-    |> update
+    |> &(emit :render, &1)
   end
 
   def on_like_wizard(state, id) do
     state
     |> like_wizard(id)
-    |> update
+    |> &(emit :render, &1)
     |> like_wizard_mutation(id)
   end
 
   def on_new_wizards(state, wizards) do
-    update %{state | state.wizards ++ wizards}
+    emit :render, %{state | state.wizards ++ wizards}
   end
 
   def like_wizard(state, id) do
@@ -107,7 +113,7 @@ defmodule ViewModels.WizardRolodex do
   end
 
   def like_wizard_mutation(_, id) do
-    mutate! @api, """
+    GraphQL.mutate! @api, """
       like_wizard(id: #{id}) {
         likes
       }
@@ -119,7 +125,7 @@ defmodule ViewModels.WizardRolodex do
   def loading(state), do: %{state | loading: true}
 
   def fetch_wizards(state) do
-    %{wizards: wizards} = await query! @api, """
+    %{wizards: wizards} = await GraphQL.query! @api, """
     wizards(limit: 10) {
       name
       likes
@@ -140,7 +146,7 @@ end
 Views describe the markup, styling, and event handlers of the UI. They are the output of a view model and render on the server and client using React.
 
 ```elixir
-defmodule Views.WizardRolodex do
+defmodule Wizards.View do
   def render(model) do
     case model.page do
       :home -> [:h1, "Welcome"],
@@ -151,26 +157,15 @@ end
 ```
 
 ```elixir
-defmodule Views.WizardList do
-  def styles, do: [
-    list: [
-      list_style: "none"
-    ],
-    item: [
-      padding: "20px"
-    ]
-  ]
+defmodule Wizards.View.WizardList do
+  import Wizards.Controller.Emitter
 
-  def like_wizard(emit, id), do: fn (_) ->
-    emit(:like, id)
-  end
-
-  def render(model, emit) do
-    [:ul@list,
+  def render(model) do
+    [:ul,
       for wizard <- model.wizards do
-        [:li@item, [
+        [:li, [
           [:p, wizard.name"],
-          [:button, [on_click: like_wizard(emit, id)], "Follow"]]]
+          [:button, [on_click: fn -> emit(:like, {id}) end], "Follow"]]]
       end]
   end
 end
@@ -178,47 +173,52 @@ end
 
 ### Controller
 
-Controllers are the central glue point, and event emitter, of a Griffin app. They handle input from users (routes, clicks, keydowns, etc.) and systems (push events, subscriptions, timers, etc.) and delegate corresponding state changes to the view model.
+Controllers are a central event emitter. They subscribe to input from users (routes, clicks, keydowns, etc.) and systems (push events, subscriptions, timers, etc.), delegate state changes to the view model, and trigger re-renders.
 
 ```elixir
-defmodule Controllers.WizardRolodex do
-  import Griffin.Controller
+defmodule Wizards.Controller do
+  # TODO: DRY this up with... macro maybe :(
+  defmodule Emitter do
+    @emitter Griffin.Controller.Emitter.new()
+    def emit(k, args), do: @emitter.emit(k, args)
+    def on(k, fun), do: @emitter.on(k, fun)
+  end
 
   def init do
     Router.get "/wizards", &emit(:index_page)
-    on :index_page, &ViewModel.on_index_page/1,
-  end
-
-  def init_browser do
     GraphQL.subscribe """
       wizards(sort: "-created_at") {
         name
         likes
         school
       }
-    """, &emit(:new_wizards, &1)
-    on :like, &ViewModel.on_like_wizard/2,
+    """, &emit(:new_wizards, {&1})
+
+    on :index_page, &ViewModel.on_index_page/1    
     on :new_wizards, &ViewModel.on_new_wizards/2
+    on :like, &ViewModel.on_like_wizard/2
   end
 end
 ```
 
 ### Apps
 
-A Griffin app glues together the M²VC pieces into one Plug middleware.
+A Griffin app glues together the MVC pieces into one Plug middleware.
 
 ```elixir
-defmodule Apps.WizardRolodex do
+defmodule Wizards do
   import Griffin.App
 
-  data_models [DataModels.Wizard]
-  view_model ViewModels.WizardRolodex
-  view Views.WizardRolodex
-  controller Controllers.WizardRolodex
+  def init. do: [
+    data_model: Wizards.DataModel,
+    view_model: Wizards.ViewModel,
+    view: Wizards.View,
+    controller Wizards.Controller
+  ]
 end
 ```
 
 ```
 $ iex -S mix
-iex> {:ok, _} = Plug.Adapters.Cowboy.http Apps.WizardRolodex, []
+iex> {:ok, _} = Plug.Adapters.Cowboy.http Wizards, []
 ```
