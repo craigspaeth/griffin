@@ -59,7 +59,7 @@ end
 
 ### Model (View)
 
-View models encapsulate state and state changes of a Griffin app. View models hold state in a single map, define pipelines for state transitions, and expand state into a view-friendly model with `model`. Passing a state map to `update` will cause the UI to re-render with the expanded model passed in.
+View models encapsulate state, and state changes, of a Griffin app. View models hold state in a single map, define pipelines for state transitions, and expand state into a view-friendly model with `model`. Passing a state map to `update` will cause the UI to re-render with the expanded model passed into views.
 
 ```elixir
 defmodule ViewModels.WizardRolodex do
@@ -96,7 +96,7 @@ defmodule ViewModels.WizardRolodex do
   end
 
   def on_new_wizards(state, wizards) do
-    %{state | state.wizards ++ wizards}
+    update %{state | state.wizards ++ wizards}
   end
 
   def like_wizard(state, id) do
@@ -119,7 +119,7 @@ defmodule ViewModels.WizardRolodex do
   def loading(state), do: %{state | loading: true}
 
   def fetch_wizards(state) do
-    %{wizards: wizards} = query! @api, """
+    %{wizards: wizards} = await query! @api, """
     wizards(limit: 10) {
       name
       likes
@@ -161,12 +161,16 @@ defmodule Views.WizardList do
     ]
   ]
 
-  def render(model) do
+  def like_wizard(emit, id), do: fn (_) ->
+    emit(:like, id)
+  end
+
+  def render(model, emit) do
     [:ul@list,
       for wizard <- model.wizards do
         [:li@item, [
           [:p, wizard.name"],
-          [:button, [onclick: [:like, wizard.id]], "Follow"]]]
+          [:button, [on_click: like_wizard(emit, id)], "Follow"]]]
       end]
   end
 end
@@ -185,7 +189,7 @@ defmodule Controllers.WizardRolodex do
     on :index_page, &ViewModel.on_index_page/1,
   end
 
-  def browser_init do
+  def init_browser do
     GraphQL.subscribe """
       wizards(sort: "-created_at") {
         name
