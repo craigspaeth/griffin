@@ -24,6 +24,8 @@ Griffin models are split into two parts—data models and view models. Data mode
 
 ````elixir
 defmodule Wizards.DataModel do
+  import RethinkDB.Query
+
   def model do
     attrs = [
       name: :string!,
@@ -40,16 +42,24 @@ defmodule Wizards.DataModel do
         ]
       ],
       mutation: [
-        create_wizard: [:wizard, attrs, Plugin.crud(:create)],
-        update_wizard: [:wizard, attrs, Plugin.crud(:update)],
-        delete_wizard: [:wizard, attrs, Plugin.crud(:delete)],
+        create_wizard: [:wizard, attrs, resolve_crud(:create)],
+        update_wizard: [:wizard, attrs, resolve_crud(:update)],
+        delete_wizard: [:wizard, attrs, resolve_crud(:delete)],
         like_wizard: [:wizard, [id: :id!], &resolve_like_wizard/3]
       ],
       query: [
-        wizard: [:wizard, attrs, crud(:read)],
-        wizards: [:wizard, attrs, crud(:list)],
+        wizard: [:wizard, attrs, resolve_crud(:read)],
+        wizards: [:wizard, attrs, resolve_crud(:list)],
       ]
     ]
+  end
+
+  def resolve_crud(method) when method == :create, do: &(create &1)
+
+  def create(wizard) do
+    table("wizards")
+    |> insert(wizard)
+    |> run
   end
 
   def resolve_like_wizard(args, _, _), do: like args.id
@@ -207,9 +217,8 @@ A Griffin app glues together the MVC pieces into one Plug middleware.
 
 ```elixir
 defmodule Wizards do
-  import Griffin.App
 
-  def init. do: [
+  def init, do: [
     data_model: Wizards.DataModel,
     view_model: Wizards.ViewModel,
     view: Wizards.View,
@@ -220,5 +229,5 @@ end
 
 ```
 $ iex -S mix
-iex> {:ok, _} = Plug.Adapters.Cowboy.http Wizards, []
+iex> {:ok, _} = Plug.Adapters.Cowboy.http Griffin.to_plug(Wizards), []
 ```
