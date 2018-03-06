@@ -60,9 +60,11 @@ defmodule MyRouter do
             ExScript.Compile.compile!(Enum.join([
               File.read!("lib/griffin/view/react.ex"),
               File.read!("lib/griffin/view/client.ex"),
+              File.read!("lib/griffin/view/shared.ex"),
               File.read!("lib/griffin/view_model/client.ex"),
               File.read!("lib/example/view.ex"),
               File.read!("lib/example/view_model.ex"),
+              File.read!("lib/example/controller.ex"),
               File.read!("lib/example/client.ex")
             ]))
           }
