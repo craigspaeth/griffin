@@ -1,6 +1,4 @@
 defmodule MyApp.View do
-  import MyApp.Controller.Emitter
-  
   def render(model) do
     [:div,
       [
@@ -13,7 +11,10 @@ defmodule MyApp.View do
           [:h1, "No wizards"]
         end
       ],
-      [:button, [on_click: fn -> emit(:add_wizard) end], "Add wizard"]
+      [:button, [on_click: fn ->
+        IO.puts "hi"
+        MyApp.Controller.emit(:add_wizard, nil)
+      end], "Add wizard"]
     ]
   end
 end

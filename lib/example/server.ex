@@ -54,6 +54,7 @@ defmodule MyRouter do
         <div id="main">#{Griffin.View.Server.render(MyApp.View, model)}</div>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/react/16.2.0/umd/react.production.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/16.2.0/umd/react-dom.production.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/EventEmitter/5.2.4/EventEmitter.min.js"></script>
         <script>
           window.main = document.getElementById("main");
           #{
@@ -62,13 +63,14 @@ defmodule MyRouter do
               File.read!("lib/griffin/view/client.ex"),
               File.read!("lib/griffin/view/shared.ex"),
               File.read!("lib/griffin/view_model/client.ex"),
+              File.read!("lib/griffin/controller/client.ex"),
               File.read!("lib/example/controller.ex"),
               File.read!("lib/example/view.ex"),
               File.read!("lib/example/view_model.ex"),
               File.read!("lib/example/client.ex")
             ]))
           }
-          ExScript.Modules.ExampleClientApp.start()
+          window.ExScript.ExampleClientApp.start()
         </script>
       </body>
     </html>
