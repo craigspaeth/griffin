@@ -21,30 +21,7 @@ defmodule Griffin.View.Shared do
       end
     [_ | childs] = if attrs != nil, do: children, else: [nil] ++ children
 
-    styles = inline_styles(view, tag_label)
-    attrs = Map.merge(attrs || %{}, %{style: styles})
     {tag_label, attrs, childs}
-  end
-
-  # Parses the first item in the DSL into an open and closing tag string
-  # with inlined styles.
-  defp inline_styles(view, tag_label) do
-    [_ | refs] = tag_label |> Atom.to_string() |> String.split("@")
-
-    if length(refs) > 0 do
-      refs
-      |> Enum.map(fn (k) ->
-        Keyword.get(view.styles(nil), String.to_atom(k))
-      end)
-      |> Enum.reduce(%{}, fn keywords, acc ->
-        Enum.reduce(keywords, %{}, fn {k, v}, acc ->
-          k = camel_case k
-          Map.merge acc, %{k => v}
-        end)
-      end)
-    else
-      nil
-    end
   end
 
   defp camel_case(atom) do

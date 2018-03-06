@@ -5,35 +5,21 @@ defmodule Griffin.View.Client do
 
   # Takes a Griffin view and renders it into a React element.
   def to_react_el(view, dsl_el) do
-    [tag_label | children] = dsl_el
-
-    attrs =
-      if Keyword.keyword?(List.first(children)) do
-        Enum.reduce(List.first(children), %{}, fn {k, v}, acc ->
-          Map.put(acc, k, v)
-        end)
-      else
-        nil
-      end
-
-    [_ | childs] = if attrs != nil, do: children, else: [nil] ++ children
-
-    styles = inline_styles(view, tag_label)
-    attrs = Map.merge(attrs || %{}, %{style: styles})
+    {tag_label, attrs, children} = Griffin.View.Shared.split_dsl_el(view, dsl_el)
 
     cond do
-      is_bitstring(List.first(childs)) ->
+      is_bitstring(List.first(children)) ->
         [tag_name | _] =
           tag_label
           |> Atom.to_string()
           |> String.split("@")
-        Griffin.View.React.text_node(tag_name, attrs, List.first(childs))
+        Griffin.View.React.text_node(tag_name, attrs, List.first(children))
 
-      is_list(List.first(childs)) ->
-        children_to_react_els(view, childs)
+      is_list(List.first(children)) ->
+        children_to_react_els(view, children)
 
       true ->
-        Enum.map(childs, fn el -> to_react_el(view, el) end)
+        Enum.map(children, fn el -> to_react_el(view, el) end)
     end
   end
 
@@ -45,27 +31,6 @@ defmodule Griffin.View.Client do
         to_react_el(view, el)
       end
     end)
-  end
-
-  # Parses the first item in the DSL into an open and closing tag string
-  # with inlined styles.
-  defp inline_styles(view, tag_label) do
-    [_ | refs] = tag_label |> Atom.to_string() |> String.split("@")
-
-    if length(refs) > 0 do
-      refs
-      |> Enum.map(fn (k) ->
-        Keyword.get(view.styles(nil), String.to_atom(k))
-      end)
-      |> Enum.reduce(%{}, fn keywords, acc ->
-        Enum.reduce(keywords, %{}, fn {k, v}, acc ->
-          k = String.replace(Atom.to_string(k), "_", "-")
-          Map.merge acc, %{k => v}
-        end)
-      end)
-    else
-      nil
-    end
   end
 
   def render(view, model) do
