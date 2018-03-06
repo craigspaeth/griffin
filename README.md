@@ -27,7 +27,7 @@ defmodule Wizards.DataModel do
   import RethinkDB.Query
 
   def model do
-    attrs = [
+    args = [
       name: :string!,
       school: :school
     ]
@@ -42,14 +42,14 @@ defmodule Wizards.DataModel do
         ]
       ],
       mutation: [
-        create_wizard: [:wizard, attrs, resolve_crud(:create)],
-        update_wizard: [:wizard, attrs, resolve_crud(:update)],
-        delete_wizard: [:wizard, attrs, resolve_crud(:delete)],
-        like_wizard: [:wizard, [id: :id!], &resolve_like_wizard/3]
+        create_wizard: [args, :wizard, resolve_crud(:create)],
+        update_wizard: [args, :wizard, resolve_crud(:update)],
+        delete_wizard: [args ,:wizard, resolve_crud(:delete)],
+        like_wizard: [[id: :id!], :wizard, &resolve_like_wizard/3]
       ],
       query: [
-        wizard: [:wizard, attrs, resolve_crud(:read)],
-        wizards: [:wizard, attrs, resolve_crud(:list)],
+        wizard: [args, :wizard, resolve_crud(:read)],
+        wizards: [args, :wizard, resolve_crud(:list)],
       ]
     ]
   end
@@ -79,7 +79,7 @@ View models encapsulate state, and state changes, of a Griffin app. View models 
 
 ```elixir
 defmodule Wizards.ViewModel do
-  import Wizards.Controller.Emitter
+  import Wizards.Controller
 
   @api "http://localhost:3000/api"
 
@@ -94,11 +94,12 @@ defmodule Wizards.ViewModel do
     }
   end
 
-  def on_index_page(state) do
+  def on_index_page(state, _) when state.page == :index, do: state
+  def on_index_page(state, ctx) do
     state
     |> page(:index)
     |> loading
-    |> &(emit :render, &1) 
+    |> &(emit :render, &1)
     |> fetch_wizards
     |> loaded
     |> &(emit :render, &1)
@@ -113,6 +114,12 @@ defmodule Wizards.ViewModel do
 
   def on_new_wizards(state, wizards) do
     emit :render, %{state | state.wizards ++ wizards}
+  end
+
+  def on_404(state) do
+    state
+    |> page(:"404")
+    |> &(emit :render, &1)
   end
 
   def like_wizard(state, id) do
@@ -158,17 +165,22 @@ Views describe the markup, styling, and event handlers of the UI. They are the o
 ```elixir
 defmodule Wizards.View do
   def render(model) do
-    case model.page do
-      :home -> [:h1, "Welcome"],
-      :list -> Views.WizardList
-    end
+    [:html,
+      [:body,
+        [:main,
+          case model.page do
+            :home -> [:h1, "Welcome"],
+            :index -> Wizars.View.Index
+          end],
+        [:griffin_script],
+        [:script, "window.initialState = #{Poison.stringify(model)}"]]]
   end
 end
 ```
 
 ```elixir
-defmodule Wizards.View.WizardList do
-  import Wizards.Controller.Emitter
+defmodule Wizards.View.Index do
+  import Wizards.Controller
 
   def render(model) do
     [:ul,
@@ -187,15 +199,26 @@ Controllers are a central event emitter. They subscribe to input from users (rou
 
 ```elixir
 defmodule Wizards.Controller do
-  # TODO: DRY this up with... macro maybe :(
-  defmodule Emitter do
-    @emitter Griffin.Controller.Emitter.new()
-    def emit(k, args), do: @emitter.emit(k, args)
-    def on(k, fun), do: @emitter.on(k, fun)
+  import Wizards.ViewModel
+  @emitter Griffin.Controller.Emitter.new()
+
+  def emit(name, args), do: @emitter.emit(name, args)
+
+  def events, do: [
+    new_wizards: &on_new_wizards/2,
+    like: &on_like_wizard/2,
+    route: &on_route/2,
+    dom_ready: &on_dom_ready/1
+  ]
+
+  def on_route(state, ctx) do
+    case ctx.url do
+      "/wizards" -> on_index_page(state, ctx)
+      _ -> on_404(state, ctx)
+    end
   end
 
-  def init do
-    Router.get "/wizards", &emit(:index_page)
+  def on_dom_ready(state) do
     GraphQL.subscribe """
       wizards(sort: "-created_at") {
         name
@@ -203,31 +226,32 @@ defmodule Wizards.Controller do
         school
       }
     """, &emit(:new_wizards, {&1})
-
-    on :index_page, &ViewModel.on_index_page/1    
-    on :new_wizards, &ViewModel.on_new_wizards/2
-    on :like, &ViewModel.on_like_wizard/2
+    %{state | JS.root().initialState}
   end
 end
 ```
 
-### Apps
+### Plug middleware
 
-A Griffin app glues together the MVC pieces into one Plug middleware.
+Finally, compose all of the pieces into one plug middleware. This can be used liberally to compose many apps together. e.g.
 
-```elixir
-defmodule Wizards do
-
-  def init, do: [
-    data_model: Wizards.DataModel,
-    view_model: Wizards.ViewModel,
-    view: Wizards.View,
-    controller Wizards.Controller
-  ]
-end
-```
+- apps
+  - user
+    - data_model
+    - view_model
+    - view
+    - controller
+  - api
+    - data_model
+-
 
 ```
+
 $ iex -S mix
-iex> {:ok, _} = Plug.Adapters.Cowboy.http Griffin.to_plug(Wizards), []
+iex> {:ok, _} = Plug.Adapters.Cowboy.http Griffin.to_plug([
+  data_model: Wizards.DataModel,
+  view_model: Wizards.ViewModel,
+  view: Wizards.View,
+  controller Wizards.Controller
+]), []
 ```
