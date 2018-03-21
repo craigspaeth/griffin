@@ -109,7 +109,7 @@ defmodule Wizards.ViewModel do
     state
     |> like_wizard(id)
     |> &(emit :render, &1)
-    |> like_wizard_mutation(id)
+    |> update_liked_wizard(id)
   end
 
   def on_new_wizards(state, wizards) do
@@ -122,14 +122,7 @@ defmodule Wizards.ViewModel do
     |> &(emit :render, &1)
   end
 
-  def like_wizard(state, id) do
-    wizards = get :wizards
-    wizard = Enum.find id: id
-    liked_wizard = %{wizard | likes: wizard.likes + 1}
-    %{state | wizards: Enum.reject(wizards) ++ [liked_wizard]}
-  end
-
-  def like_wizard_mutation(_, id) do
+  def update_liked_wizard(_, id) do
     GraphQL.mutate! @api, """
       like_wizard(id: #{id}) {
         likes
