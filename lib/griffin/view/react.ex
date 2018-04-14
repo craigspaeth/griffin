@@ -7,9 +7,9 @@ defmodule Griffin.View.React do
   Creates a React element with a text node as the inner child
   """
   def text_node(tag_label, attrs, text) do
-    JS.root()["React"].createElement(
+    JS.global()["React"].createElement(
       fn props ->
-        JS.root()["React"].createElement(tag_label, attrs, text)
+        JS.global()["React"].createElement(tag_label, attrs, text)
       end,
       %{}
     )
@@ -20,7 +20,7 @@ defmodule Griffin.View.React do
   """
   def render(el, selector) do
     # klass = JS.embed "class Wrapper extends React.Component { componentDidMount() { window.forceUpdate = () => this.forceUpdate() } render() { return el } }"
-    # wrapper = JS.root()["React"].createElement(klass, %{})
-    JS.root()["ReactDOM"].render(el, JS.root().document.querySelector(selector))
+    # wrapper = JS.global()["React"].createElement(klass, %{})
+    JS.global()["ReactDOM"].render(el, JS.global().document.querySelector(selector))
   end
 end

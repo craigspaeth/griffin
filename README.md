@@ -219,7 +219,7 @@ defmodule Wizards.Controller do
         school
       }
     """, &emit(:new_wizards, {&1})
-    %{state | JS.root().initialState}
+    %{state | JS.global().initialState}
   end
 end
 ```
