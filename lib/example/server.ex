@@ -47,7 +47,8 @@ defmodule MyRouter do
   )
 
   get "/" do
-    model = MyApp.ViewModel.init() |> MyApp.ViewModel.load_index
+    model = MyApp.ViewModel.init() |> MyApp.ViewModel.on_init()
+
     html = """
     <html>
       <body>
@@ -58,23 +59,27 @@ defmodule MyRouter do
         <script>
           window.main = document.getElementById("main");
           #{
-            ExScript.Compile.compile!(Enum.join([
-              File.read!("lib/griffin/view/react.ex"),
-              File.read!("lib/griffin/view/client.ex"),
-              File.read!("lib/griffin/view/shared.ex"),
-              File.read!("lib/griffin/view_model/client.ex"),
-              File.read!("lib/griffin/controller/client.ex"),
-              File.read!("lib/example/controller.ex"),
-              File.read!("lib/example/view.ex"),
-              File.read!("lib/example/view_model.ex"),
-              File.read!("lib/example/client.ex")
-            ]))
-          }
+      ExScript.Compile.compile!(
+        Enum.join([
+          File.read!("lib/griffin/view/react.ex"),
+          File.read!("lib/griffin/view/client.ex"),
+          File.read!("lib/griffin/view/shared.ex"),
+          File.read!("lib/griffin/controller.ex"),
+          File.read!("lib/griffin/lib/json.ex"),
+          File.read!("lib/griffin/lib/http.ex"),
+          File.read!("lib/example/controller.ex"),
+          File.read!("lib/example/view.ex"),
+          File.read!("lib/example/view_model.ex"),
+          File.read!("lib/example/client.ex")
+        ])
+      )
+    }
           window.ExScript.ExampleClientApp.start()
         </script>
       </body>
     </html>
     """
+
     conn
     |> put_resp_content_type("text/html")
     |> send_resp(200, html)
