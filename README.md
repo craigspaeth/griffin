@@ -79,7 +79,7 @@ View models encapsulate state, and state changes, of a Griffin app. View models 
 
 ```elixir
 defmodule Wizards.ViewModel do
-  import Wizards.Controller
+  import Griffin.Controller
 
   @api "http://localhost:3000/api"
 
@@ -98,28 +98,28 @@ defmodule Wizards.ViewModel do
   def on_index_page(state, ctx) do
     state
     |> page(:index)
-    |> loading
-    |> &(emit :render, &1)
-    |> fetch_wizards
-    |> loaded
-    |> &(emit :render, &1)
+    |> loading()
+    |> render()
+    |> fetch_wizards()
+    |> loaded()
+    |> render()
   end
 
   def on_like_wizard(state, id) do
     state
     |> like_wizard(id)
-    |> &(emit :render, &1)
+    |> render()
     |> update_liked_wizard(id)
   end
 
   def on_new_wizards(state, wizards) do
-    emit :render, %{state | state.wizards ++ wizards}
+    render %{state | state.wizards ++ wizards}
   end
 
   def on_404(state) do
     state
     |> page(:"404")
-    |> &(emit :render, &1)
+    |> render()
   end
 
   def update_liked_wizard(_, id) do
@@ -173,7 +173,7 @@ end
 
 ```elixir
 defmodule Wizards.View.Index do
-  import Wizards.Controller
+  import Griffin.Controller
 
   def render(model) do
     [:ul,
@@ -193,9 +193,7 @@ Controllers are a central event emitter. They subscribe to input from users (rou
 ```elixir
 defmodule Wizards.Controller do
   import Wizards.ViewModel
-  @emitter Griffin.Controller.Emitter.new()
-
-  def emit(name, args), do: @emitter.emit(name, args)
+  import Griffin.Controller
 
   def events, do: [
     new_wizards: &on_new_wizards/2,
