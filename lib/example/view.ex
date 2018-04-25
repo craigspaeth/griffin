@@ -61,6 +61,14 @@ defmodule MyApp.View do
           ]
         ],
         [:button, "Add todo"]
+      ],
+      [
+        :p,
+        if model.loading do
+          "..."
+        else
+          ""
+        end
       ]
     ]
   end

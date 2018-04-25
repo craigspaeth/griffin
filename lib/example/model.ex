@@ -6,7 +6,8 @@ defmodule Model do
 
   def fields,
     do: [
-      text: [:string, :required]
+      text: [:string, :required],
+      finished: [:boolean]
     ]
 
   def resolve(ctx) do
