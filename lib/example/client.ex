@@ -2,30 +2,27 @@ defmodule ExampleClientApp do
   import ExScript.Universal
 
   def start do
+    # Set up persistent state map that updates on set event, TODO: Use Elixir abstraction like Agent?
+    state = MyApp.ViewModel.model()
+
+    Griffin.Controller.on(:set, fn new_state ->
+      JS.embed("state = new_state")
+    end)
+
     # Wire controller events
     for {event, fun} <- MyApp.Controller.events() do
-      MyApp.Controller.on(event, fn ->
-        fun.(MyApp.ViewModel.init())
+      Griffin.Controller.on(event, fn args ->
+        fun.(MyApp.ViewModel.model(state), args)
       end)
     end
 
-    # TOOD: ExScript bug wrapping the above in an expression
-    foo = nil
-
     # Wire view rendering
-    MyApp.Controller.on(:render, fn model ->
+    Griffin.Controller.on(:render, fn model ->
       Griffin.View.Client.render(MyApp.View, model)
     end)
 
-    # TOOD: ExScript bug wrapping the above in an expression
-    foo = nil
-
     # Init
-    MyApp.Controller.emit(:render, MyApp.ViewModel.init())
-
-    # TOOD: ExScript bug wrapping the above in an expression
-    foo = nil
-
-    MyApp.Controller.emit(:init, nil)
+    Griffin.Controller.emit(:render, MyApp.ViewModel.model())
+    Griffin.Controller.emit(:init, nil)
   end
 end

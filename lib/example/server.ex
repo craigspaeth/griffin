@@ -1,24 +1,3 @@
-defmodule Model do
-  import Griffin.Model
-  import Griffin.Model.Adapters.Memory
-
-  def namespace, do: {:wizard, :wizards}
-
-  def fields,
-    do: [
-      name: [:string, :required]
-    ]
-
-  def resolve(ctx) do
-    ctx
-    |> validate(fields())
-    |> to_db_statement
-  end
-end
-
-defmodule Controller do
-end
-
 defmodule MyRouter do
   use Plug.Router
 
@@ -47,7 +26,7 @@ defmodule MyRouter do
   )
 
   get "/" do
-    model = MyApp.ViewModel.init() |> MyApp.ViewModel.on_init()
+    model = MyApp.ViewModel.model() |> MyApp.ViewModel.on_init()
 
     html = """
     <html>
@@ -61,16 +40,16 @@ defmodule MyRouter do
           #{
       ExScript.Compile.compile!(
         Enum.join([
+          File.read!("lib/example/controller.ex"),
+          File.read!("lib/example/view.ex"),
+          File.read!("lib/example/view_model.ex"),
+          File.read!("lib/example/client.ex"),
           File.read!("lib/griffin/view/react.ex"),
           File.read!("lib/griffin/view/client.ex"),
           File.read!("lib/griffin/view/shared.ex"),
           File.read!("lib/griffin/controller.ex"),
           File.read!("lib/griffin/lib/json.ex"),
-          File.read!("lib/griffin/lib/http.ex"),
-          File.read!("lib/example/controller.ex"),
-          File.read!("lib/example/view.ex"),
-          File.read!("lib/example/view_model.ex"),
-          File.read!("lib/example/client.ex")
+          File.read!("lib/griffin/lib/http.ex")
         ])
       )
     }

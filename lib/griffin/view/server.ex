@@ -28,7 +28,7 @@ defmodule Griffin.View.Server do
         |> Enum.join("")
 
       is_list(el) ->
-        {tag_label, _, children} = Griffin.View.Shared.split_dsl_el(view, el)
+        {tag_label, _, children} = Griffin.View.Shared.split_dsl_el(el)
 
         children =
           children
