@@ -25,6 +25,7 @@ Griffin models are split into two parts—data models and view models. Data mode
 ````elixir
 defmodule Wizards.DataModel do
   import RethinkDB.Query
+  import Griffin.Model
 
   def model do
     args = [
@@ -50,13 +51,21 @@ defmodule Wizards.DataModel do
       query: [
         wizard: [args, :wizard, resolve_crud(:read)],
         wizards: [args, :wizard, resolve_crud(:list)],
+      ],
+      subscription: [
+        wizard_created: [[name: :string], :wizard, &(on_wizard_created &1)]
       ]
     ]
+  end
+
+  def on_wizard_created(args, wizard) do
+    if args.name == wizard.name, do: wizard, else: nil
   end
 
   def resolve_crud(method) when method == :create, do: &(create &1)
 
   def create(wizard) do
+    emit :comment_added,  [name: wizard.name], wizard
     table("wizards")
     |> insert(wizard)
     |> run

@@ -18,10 +18,4 @@ defmodule Griffin.Controller do
       nil
     end
   end
-
-  def render(model) do
-    emit(:set, model)
-    emit(:render, model)
-    model
-  end
 end
