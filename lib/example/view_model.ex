@@ -1,6 +1,6 @@
 defmodule MyApp.ViewModel do
   import ExScript.Universal
-  import Griffin.Controller
+  import Griffin.ViewModel
 
   def model(
         state \\ %{
@@ -21,12 +21,6 @@ defmodule MyApp.ViewModel do
   end
 
   def on_add_todo(model) do
-    # Optimistic UI version
-    # model
-    # |> create_todo()
-    # |> Map.put(:todos, model.todos ++ [%{text: model.todo_text}])
-    # |> Map.put(:todo_text, "")
-    # |> render()
     model
     |> loading(true)
     |> create_todo()
@@ -39,13 +33,13 @@ defmodule MyApp.ViewModel do
   def on_update_todo_text(model, todo_text) do
     model
     |> Map.put(:todo_text, todo_text)
-    |> render()
+    |> update()
   end
 
   def on_remove_todo(model, i) do
     model
     |> Map.put(:todos, List.delete_at(model.todos, i))
-    |> render()
+    |> update()
   end
 
   def on_toggle_finish_todo(model, i) do
@@ -55,7 +49,7 @@ defmodule MyApp.ViewModel do
 
     model
     |> Map.put(:todos, new_todos)
-    |> render()
+    |> update()
   end
 
   defp fetch_todos(model) do
@@ -77,6 +71,6 @@ defmodule MyApp.ViewModel do
   defp loading(model, bool) do
     model
     |> Map.put(:loading, bool)
-    |> render()
+    |> update()
   end
 end
